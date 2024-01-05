@@ -1,0 +1,12 @@
+namespace PCHealth
+{
+    [default_interface]
+    runtimeclass DriveView : Microsoft.UI.Xaml.Controls.UserControl
+    {
+        DriveView();
+
+        String DriveName{ get; set; };
+        Double UsedSpace{ get; set; };
+        Double Capacity{ get; set; };
+    }
+}

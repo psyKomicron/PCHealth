@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="PCHealth.LargeProgressBar"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:PCHealth"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Loaded="UserControl_Loaded">
+
+    <Grid SizeChanged="Grid_SizeChanged" ColumnSpacing="5" CornerRadius="{StaticResource ControlCornerRadius}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition/>
+            <ColumnDefinition Width="37"/>
+        </Grid.ColumnDefinitions>
+        <Grid.Resources>
+            <!--<Storyboard x:Name="ProgressBarStoryboard">
+                <DoubleAnimation
+                    x:Name="ProgressBarAnimation"
+                    Storyboard.TargetName="DeterminateProgressBarIndicatorTransform"
+                    Storyboard.TargetProperty="ScaleX"
+                    To="0"
+                    Duration="0:0:0.187"/>
+            </Storyboard>-->
+        </Grid.Resources>
+
+        <Border 
+            x:Name="BackgroundBorder" 
+            HorizontalAlignment="Stretch" 
+            Background="{ThemeResource ControlSolidFillColorDefaultBrush}" 
+            Height="20" 
+            CornerRadius="9">
+            <Rectangle 
+                x:Name="DeterminateProgressBarIndicator" 
+                Fill="{StaticResource SystemAccentColorLight2}"
+                HorizontalAlignment="Left" 
+                RadiusX="10"
+                RadiusY="13"
+                VerticalAlignment="Stretch">
+            </Rectangle>
+        </Border>
+
+        <!--<Border 
+            x:Name="ProgressBorder" 
+            HorizontalAlignment="Left" 
+            Background="{ThemeResource AccentFillColorDefaultBrush}" 
+            Height="{StaticResource ProgressBarHeight}" 
+            CornerRadius="{StaticResource OverlayCornerRadius}"
+            Scale="0.5,1,1"
+            Visibility="Collapsed"/>-->
+
+        <StackPanel Orientation="Horizontal" Spacing="3" Grid.Column="1" VerticalAlignment="Center">
+            <TextBlock Text="{x:Bind Percentage, Mode=OneWay}" Style="{StaticResource CaptionTextBlockStyle}" Opacity="0.6"/>
+            <TextBlock Text="%" Style="{StaticResource CaptionTextBlockStyle}" Opacity="0.6"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

@@ -1,0 +1,187 @@
+<Window
+    x:Class="PCHealth.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:PCHealth"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid x:Name="RootGrid">
+        <Grid.RowDefinitions>
+            <RowDefinition MinHeight="30" MaxHeight="30"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Grid x:Name="WindowTitleBarGrid" Background="Transparent">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition x:Name="LeftPaddingColumn" Width="0"/>
+                <ColumnDefinition x:Name="SettingsButtonColumn" Width="Auto"/>
+                <ColumnDefinition x:Name="TitleBarGridContentColumn" Width="*"/>
+                <ColumnDefinition x:Name="RightPaddingColumn" Width="45"/>
+            </Grid.ColumnDefinitions>
+        </Grid>
+
+        <Grid Grid.Row="1">
+            <ScrollViewer Loaded="ScrollViewer_Loaded">
+                <Grid
+                    RowSpacing="20"
+                    Padding="5"
+                    Loading="RootGrid_Loading">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <InfoBar x:Name="InfoBar" Severity="Informational" IsIconVisible="True" IsClosable="True"/>
+
+                    <Grid
+                        Grid.Row="1"
+                        Margin="0,5,0,0"
+                        ColumnSpacing="15">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*" MinWidth="500"/>
+                            <ColumnDefinition Width="1*" MinWidth="300"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid 
+                            Grid.Column="0" 
+                            CornerRadius="{StaticResource OverlayCornerRadius}" 
+                            Background="{ThemeResource SolidBackgroundFillColorTertiary}" 
+                            BorderBrush="{ThemeResource ControlElevationBorderBrush}"
+                            BorderThickness="1"
+                            Padding="19,15"
+                            MinWidth="400">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <StackPanel
+                                VerticalAlignment="Stretch"
+                                HorizontalAlignment="Stretch"
+                                Grid.Column="1"
+                                Spacing="10">
+                                <StackPanel.Resources>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource SubheaderTextBlockStyle}">
+                                        <Setter Property="FontSize" Value="28"/>
+                                    </Style>
+                                </StackPanel.Resources>
+
+                                <Grid ColumnSpacing="3">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition/>
+                                        <ColumnDefinition/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Recycle bin"/>
+                                    <TextBlock x:Name="SystemRecycleBinSize" Grid.Column="1" HorizontalAlignment="Center" Text="0Kb"/>
+                                    <Button x:Name="SystemRecycleBinSizeButton" Grid.Column="2" Style="{StaticResource IconButtonStyle}" HorizontalAlignment="Center" VerticalAlignment="Center" Click="SystemRecycleBinSizeButton_Click">
+                                        <FontIcon Glyph="&#xE74D;"/>
+                                    </Button>
+                                </Grid>
+
+                                <Grid ColumnSpacing="3">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition/>
+                                        <ColumnDefinition/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Hibernation file"/>
+                                    <TextBlock x:Name="HibernationFileSize" Grid.Column="1" HorizontalAlignment="Center" Text="0Kb"/>
+                                    <Button x:Name="HibernationFileSizeButton" Grid.Column="2" Style="{StaticResource IconButtonStyle}" HorizontalAlignment="Center" VerticalAlignment="Center" Click="HibernationFileSizeButton_Click">
+                                        <FontIcon Glyph="&#xE74D;"/>
+                                    </Button>
+                                </Grid>
+
+                                <Grid ColumnSpacing="3">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition/>
+                                        <ColumnDefinition/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Downloads folder"/>
+                                    <TextBlock x:Name="DownloadsFolderSize" Grid.Column="1" HorizontalAlignment="Center" Text="0Kb"/>
+                                    <Button x:Name="DownloadsFolderSizeButton" Grid.Column="2" Style="{StaticResource IconButtonStyle}" HorizontalAlignment="Center" VerticalAlignment="Center" Click="DownloadsFolderSizeButton_Click">
+                                        <FontIcon Glyph="&#xE74D;"/>
+                                    </Button>
+                                </Grid>
+                            </StackPanel>
+
+                            <Grid Grid.Row="2">
+                                <Grid.Resources>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource SubheaderTextBlockStyle}">
+                                        <Setter Property="FontSize" Value="28"/>
+                                    </Style>
+                                </Grid.Resources>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Connected drives"/>
+                                <TextBlock x:Name="ConnectedDrivesNumberTextBlock" Grid.Column="1"/>
+                            </Grid>
+                        </Grid>
+
+                        <Grid
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Center"
+                            MinHeight="300"
+                            MinWidth="300"
+                            CornerRadius="{StaticResource OverlayCornerRadius}"
+                            Background="{ThemeResource SolidBackgroundFillColorTertiary}"
+                            BorderBrush="{ThemeResource ControlElevationBorderBrush}"
+                            BorderThickness="1"
+                            Padding="10"
+                            Grid.Column="1">
+                            <ProgressRing 
+                                Background="{ThemeResource SolidBackgroundFillColorSecondary}"
+                                Height="250"
+                                Width="250"
+                                Value="0.5"
+                                Maximum="1"
+                                IsIndeterminate="False" />
+                            <TextBlock 
+                                Text="{x:Bind SystemGeneralHealth}" 
+                                HorizontalAlignment="Center" 
+                                VerticalAlignment="Center"
+                                Margin="5,0,0,0"
+                                Style="{StaticResource DisplayTextBlockStyle}"/>
+                            <Button 
+                                VerticalAlignment="Bottom" 
+                                HorizontalAlignment="Right" 
+                                Content="?"/>
+                        </Grid>
+                    </Grid>
+
+                    <StackPanel
+                        x:Name="DrivesList"
+                        Grid.Row="2"
+                        Orientation="Vertical"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch">
+                        <StackPanel.ChildrenTransitions>
+                            <TransitionCollection>
+                                <ReorderThemeTransition/>
+                                <RepositionThemeTransition/>
+                            </TransitionCollection>
+                        </StackPanel.ChildrenTransitions>
+                    </StackPanel>
+
+                    <ListView Grid.Row="0" x:Name="TestListView"/>
+                </Grid>
+            </ScrollViewer>
+        </Grid>
+        
+        <ContentDialog x:Name="DirectoryDeleteConfirmation" PrimaryButtonText="Delete" SecondaryButtonText="Cancel">
+            <StackPanel Orientation="Horizontal" Spacing="12">
+                <CheckBox x:Name="RecycleDeleteCheckbox" Content="Recycle items (recycle bin)"/>
+                <CheckBox x:Name="ParallelizeDeleteCheckbox" Content="Parallelize delete"/>
+            </StackPanel>
+        </ContentDialog>
+    </Grid>
+</Window>

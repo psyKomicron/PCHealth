@@ -1,0 +1,110 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="PCHealth.Tag"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Width="180"
+    Margin="5,0,5,0">
+
+    <Grid Padding="{x:Bind Padding}">
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup x:Name="PointerStates">
+                <VisualState x:Name="Normal"/>
+                <VisualState x:Name="PointerOver">
+                    <Storyboard>
+                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="RootGrid" Storyboard.TargetProperty="Background">
+                            <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource ButtonPointerOverBackgroundThemeBrush}" />
+                        </ObjectAnimationUsingKeyFrames>
+                    </Storyboard>
+                </VisualState>
+                <VisualState x:Name="PointerPressed">
+                    <Storyboard>
+                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="RootGrid" Storyboard.TargetProperty="Background">
+                            <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource ButtonBackgroundPressed}" />
+                        </ObjectAnimationUsingKeyFrames>
+                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="HeaderTextBlock" Storyboard.TargetProperty="Foreground">
+                            <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource ButtonForegroundPointerOver}" />
+                        </ObjectAnimationUsingKeyFrames>
+                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="TextTextBlock" Storyboard.TargetProperty="Foreground">
+                            <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource ButtonForegroundPointerOver}" />
+                        </ObjectAnimationUsingKeyFrames>
+                    </Storyboard>
+                </VisualState>
+            </VisualStateGroup>
+            <VisualStateGroup x:Name="ToggleStates">
+                <VisualState x:Name="NotToggled"/>
+                <VisualState x:Name="Toggled">
+                    <VisualState.Setters>
+                        <Setter Target="BackgroundBorder.Visibility" Value="Visible"/>
+                        <Setter Target="BackgroundBorder.Background" Value="{ThemeResource SystemAccentColor}"/>
+                        <Setter Target="RootGrid.Background" Value="Transparent"/>
+                    </VisualState.Setters>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
+        
+        <Border 
+            x:Name="BackgroundBorder"
+            VerticalAlignment="Stretch" 
+            HorizontalAlignment="Stretch" 
+            Background="{ThemeResource ControlFillColorDefaultBrush}" 
+            CornerRadius="{StaticResource OverlayCornerRadius}"
+            BackgroundSizing="InnerBorderEdge"
+            BorderThickness="1"
+            Margin="0,4"/>
+
+        <Grid 
+            x:Name="RootGrid"
+            ColumnSpacing="5"
+            VerticalAlignment="Center"
+            Padding="7,9"
+            Background="Transparent"
+            CornerRadius="{StaticResource OverlayCornerRadius}" 
+            BackgroundSizing="InnerBorderEdge"
+            BorderBrush="{ThemeResource ControlElevationBorderBrush}"
+            PointerPressed="Grid_PointerPressed" 
+            PointerEntered="Grid_PointerEntered" 
+            PointerExited="Grid_PointerExited"
+            PointerReleased="RootGrid_PointerReleased">
+            <Grid.BackgroundTransition>
+                <BrushTransition Duration="0:0:0.083" />
+            </Grid.BackgroundTransition>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Rectangle 
+                Height="20" 
+                Width="20" 
+                RadiusX="5"
+                RadiusY="5"
+                VerticalAlignment="Center"
+                Grid.Column="0"
+                Grid.Row="0">
+                <Rectangle.Fill>
+                    <SolidColorBrush Color="{x:Bind Color}"/>
+                </Rectangle.Fill>
+            </Rectangle>
+            <TextBlock
+                x:Name="HeaderTextBlock"
+                Text="{x:Bind Header}" 
+                Style="{StaticResource CaptionTextBlockStyle}" 
+                VerticalAlignment="Center"
+                Grid.Row="0" Grid.Column="1"/>
+            <TextBlock 
+                x:Name="TextTextBlock"
+                Text="{x:Bind Text, Mode=OneWay}"
+                Style="{StaticResource CaptionTextBlockStyle}"
+                VerticalAlignment="Center"
+                Opacity="0.6"
+                Grid.Column="1" Grid.Row="1"/>
+        </Grid>
+    </Grid>
+</UserControl>

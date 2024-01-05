@@ -1,0 +1,129 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ApplicationDefinition Include="App.xaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="MainWindow.xaml" />
+    <Page Include="DriveView.xaml">
+      <Filter>Controls</Filter>
+    </Page>
+    <Page Include="LargeProgressBar.xaml">
+      <Filter>Controls</Filter>
+    </Page>
+    <Page Include="Tag.xaml">
+      <Filter>Controls</Filter>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Midl Include="App.idl" />
+    <Midl Include="MainWindow.idl" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
+    <ClCompile Include="System.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="DriveInfo.cpp">
+      <Filter>Common\Filesystem</Filter>
+    </ClCompile>
+    <ClCompile Include="LibraryPathes.cpp">
+      <Filter>Common\Filesystem</Filter>
+    </ClCompile>
+    <ClCompile Include="DirectoryInfo.cpp">
+      <Filter>Common\Filesystem</Filter>
+    </ClCompile>
+    <ClCompile Include="DirectorySizeCalculator.cpp">
+      <Filter>Common\Filesystem</Filter>
+    </ClCompile>
+    <ClCompile Include="FileSize.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="UserLibraries.cpp">
+      <Filter>Common\Filesystem</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="System.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="ICancellable.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="DriveInfo.h">
+      <Filter>Common\Filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="DriveTechnology.h">
+      <Filter>Common\Filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="LibraryPathes.h">
+      <Filter>Common\Filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="DirectoryInfo.h">
+      <Filter>Common\Filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="DirectorySizeCalculator.h">
+      <Filter>Common\Filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="FileSize.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="UserLibraries.h">
+      <Filter>Common\Filesystem</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Assets\Wide310x150Logo.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\StoreLogo.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square150x150Logo.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square44x44Logo.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\SplashScreen.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\LockScreenLogo.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Assets">
+      <UniqueIdentifier>{ed3e1aa7-36b6-4841-816c-05f907221ed6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common">
+      <UniqueIdentifier>{c136d187-31ab-48d2-b817-56dd92d9ad5d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Controls">
+      <UniqueIdentifier>{e0fc23b5-757f-4e9b-80b7-d7ca2e01ef35}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common\Filesystem">
+      <UniqueIdentifier>{798a7fcd-fca6-4bf3-a384-22297b4378aa}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="readme.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="app.manifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <AppxManifest Include="Package.appxmanifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="$(MSBuildThisFileDirectory)..\..\natvis\wil.natvis" />
+  </ItemGroup>
+</Project>

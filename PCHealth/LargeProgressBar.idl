@@ -1,0 +1,12 @@
+namespace PCHealth
+{
+    [default_interface]
+    runtimeclass LargeProgressBar : Microsoft.UI.Xaml.Controls.UserControl, Microsoft.UI.Xaml.Data.INotifyPropertyChanged
+    {
+        LargeProgressBar();
+
+        Double Value;
+        Double Maximum;
+        Double Percentage{ get; };
+    }
+}

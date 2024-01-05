@@ -1,0 +1,19 @@
+namespace PCHealth
+{
+    [default_interface]
+    runtimeclass Tag : Microsoft.UI.Xaml.Controls.UserControl
+    {
+        Tag();
+        
+        static Microsoft.UI.Xaml.DependencyProperty HeaderProperty{ get; };
+        static Microsoft.UI.Xaml.DependencyProperty TextProperty{ get; };
+        static Microsoft.UI.Xaml.DependencyProperty ColorProperty{ get; };
+
+        String Text;
+        String Header;
+        Windows.UI.Color Color;
+        Boolean IsToggable;
+
+        event Windows.Foundation.TypedEventHandler<Tag, Microsoft.UI.Xaml.RoutedEventArgs> Click;
+    }
+}
