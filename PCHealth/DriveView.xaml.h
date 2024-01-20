@@ -5,7 +5,21 @@
 #include "winrt/Microsoft.UI.Xaml.Controls.Primitives.h"
 #include "DriveView.g.h"
 
-#include <map>
+#include "DriveInfo.h"
+
+namespace winrt::PCHealth::implementation
+{
+    enum FileClass
+    {
+        Video,
+        Picture,
+        Music,
+        Document,
+        RecycleBin,
+        Downloads,
+        System
+    };
+}
 
 namespace winrt::PCHealth::implementation
 {
@@ -21,9 +35,7 @@ namespace winrt::PCHealth::implementation
         double Capacity();
         void Capacity(const double& value);
 
-        std::map<winrt::Windows::Storage::KnownFolderId, winrt::Windows::UI::Color> GetStatsColorStack();
-        Windows::Foundation::IAsyncAction ExpanderContentGrid_Loading(winrt::Microsoft::UI::Xaml::FrameworkElement const& sender, winrt::Windows::Foundation::IInspectable const& args);
-
+        Windows::Foundation::IAsyncAction SecondPivotContentGrid_Loading(winrt::Microsoft::UI::Xaml::FrameworkElement const& sender, winrt::Windows::Foundation::IInspectable const& args);
         void DocumentsTag_Click(winrt::PCHealth::Tag const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
         void VideosTag_Click(winrt::PCHealth::Tag const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
         void ImagesTag_Click(winrt::PCHealth::Tag const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
@@ -31,13 +43,22 @@ namespace winrt::PCHealth::implementation
         void RecycleBinTag_Click(winrt::PCHealth::Tag const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
         void SystemTag_Click(winrt::PCHealth::Tag const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
         void DownloadsTag_Click(winrt::PCHealth::Tag const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        winrt::Windows::Foundation::IAsyncAction ExtensionsPivotContentGrid_Loading(winrt::Microsoft::UI::Xaml::FrameworkElement const& sender, winrt::Windows::Foundation::IInspectable const& args);
+        void RootGrid_Loading(winrt::Microsoft::UI::Xaml::FrameworkElement const& sender, winrt::Windows::Foundation::IInspectable const& args);
+        void CancelButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);
+        void ResetButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);
 
     private:
         winrt::hstring driveName{};
         double usedSpace{};
         double capacity{};
+        Common::Filesystem::DriveInfo driveInfo{};
+        winrt::Windows::Foundation::IAsyncAction action;
 
         inline void TagClicked();
+        void FillGradients(const std::array<std::tuple<uint64_t, FileClass>, 7>& sizes, const winrt::Microsoft::UI::Xaml::Media::GradientStopCollection& gradientStopCollection);
+        std::map<FileClass, winrt::Windows::UI::Color> GetStatsColorStack();
+        winrt::Windows::Foundation::IAsyncAction LoadExtensionsStats();
     };
 }
 

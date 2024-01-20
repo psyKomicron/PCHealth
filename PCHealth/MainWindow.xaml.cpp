@@ -69,6 +69,9 @@ namespace winrt::PCHealth::implementation
     winrt::Windows::Foundation::IAsyncAction MainWindow::RootGrid_Loading(winrt::Microsoft::UI::Xaml::FrameworkElement const& sender, winrt::Windows::Foundation::IInspectable const& args)
     {
         auto&& drives = Common::Filesystem::DriveInfo::GetDrives();
+
+        ConnectedDrivesNumberTextBlock().Text(std::to_wstring(drives.size()));
+
         uint64_t recycleBinTotalSize = 0;
         for (auto&& drive : drives)
         {
@@ -110,42 +113,7 @@ namespace winrt::PCHealth::implementation
 
         // Tests.
         OutputDebugString(L"Loading tests...\n");
-        /*Common::Filesystem::DriveInfo c{ L"V:\\" };
-        std::map<std::wstring, uint64_t> extensions{};
 
-        c.getExtensionsStats(&extensions);
-
-        DispatcherQueue().TryEnqueue([this, extensions]
-        {
-            for (auto&& pair : extensions)
-            {
-                std::wstring text = std::format(L"{} : {}", pair.first, Common::FileSize(pair.second).ToString());
-                TestListView().Items().Append(winrt::box_value(text));
-            }
-        });*/
-
-        std::map<std::wstring, uint64_t> extensions{{ L".mp4", 0 }, { L".txt", 0 }};
-        for (auto&& drive : drives)
-        {
-            drive.getExtensionsStats(&extensions);
-        }
-
-        /*std::sort(std::begin(extensions), std::end(extensions), [](std::wstring first, std::wstring second)
-        {
-            return false;
-        });*/
-
-        //concurrency::parallel_for_each(std::begin(drives), std::end(drives), [this, allDisksExtensions])
-        DispatcherQueue().TryEnqueue([this, extensions]
-        {
-            size_t it = 0;
-            for (auto&& pair : extensions)
-            {
-                std::wstring text = std::format(L"{} : {}", pair.first, Common::FileSize(pair.second).ToString());
-                TestListView().Items().Append(winrt::box_value(text));
-                if (++it > 100) break;
-            }
-        });
 
         OutputDebugString(L"Tests loaded.\n");
     }

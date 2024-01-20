@@ -112,7 +112,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="readme.txt" />
+    <Text Include="CHANGELOG.md" />
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="app.manifest" />

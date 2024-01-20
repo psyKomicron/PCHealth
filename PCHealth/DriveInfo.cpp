@@ -1,8 +1,8 @@
 #include "pch.h"
-
-#include "DirectorySizeCalculator.h"
 #include "DriveInfo.h"
+
 #include "System.h"
+#include "DirectorySizeCalculator.h"
 
 #include <Windows.h>
 #include <shlwapi.h>
@@ -102,13 +102,13 @@ namespace Common::Filesystem
         return {};
     }
 
-    void DriveInfo::getExtensionsStats(std::map<std::wstring, uint64_t>* extensions)
+    void DriveInfo::getExtensionsStats(std::unordered_map<std::wstring, uint64_t>* extensionsRegices)
     {
         std::timed_mutex timedMutex{};
-        getDirStats(extensions, driveName, &timedMutex, extensions->empty());
+        getDirStats(extensionsRegices, driveName, &timedMutex, extensionsRegices->empty());
     }
 
-    void DriveInfo::getDirStats(std::map<std::wstring, uint64_t>* extensions, const std::wstring& path, std::timed_mutex* timedMutex, const bool& listAll)
+    void DriveInfo::getDirStats(std::unordered_map<std::wstring, uint64_t>* extensions, const std::wstring& path, std::timed_mutex* timedMutex, const bool& listAll)
     {
         if (path.starts_with(L"\\")) // Prevents infinite looping when the directory name is invalid (often buffer too small)
         {
@@ -134,41 +134,34 @@ namespace Common::Filesystem
                 if (!(findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
                 {
                     uint64_t fileSize = (static_cast<int64_t>(findData.nFileSizeHigh) << 32) | findData.nFileSizeLow;
-                    //std::wstring fileName{ findData.cFileName };
                     std::filesystem::path filePath{ findData.cFileName };
                     if (filePath.has_extension())
                     {
+                        using namespace std::chrono_literals;
+                        std::unique_lock<std::timed_mutex> lock{ *timedMutex, std::defer_lock };
+
                         std::wstring extension = filePath.extension();
-                        std::wregex extRegex{ extension };
-                        //{ L"^.[A-z]{2,}" };
-                        bool hasMatch = false;
-                        if (!listAll)
+                        if (lock.try_lock_for(1s))
                         {
-
-                        }
-
-                        if (listAll || hasMatch)
-                        {
-                            using namespace std::chrono_literals;
-                            std::unique_lock<std::timed_mutex> lock{ *timedMutex, std::defer_lock };
-
-                            if (lock.try_lock_for(1s))
+                            for (const auto& pair : *extensions)
                             {
-                                extensions->insert_or_assign(extension, (extensions->contains(extension) ? extensions->at(extension) : 0) + fileSize);
-                            }
-#ifdef _DEBUG
-                            else
-                            {
-                                std::filesystem::path root{ path };
-                                root /= filePath;
-                                OutputDebugString(std::format(L"Failed to take mutex (1 sec) for '{}'.\n", root.generic_wstring()).c_str());
-                            }
+                                std::wregex re{ pair.first, std::regex_constants::icase };
+                                if (std::regex_search(extension, re))
+                                {
+                                    extensions->operator[](pair.first) = pair.second + fileSize;
+                                    break;
+                                }
+#ifdef ENABLE_DEBUG_OUTPUT
+                                else OutputDebugString(std::format(L"/{}/ search failed in '{}'\n", pair.first, extension).c_str());
 #endif
+                            }
                         }
-#ifdef _DEBUG
+#ifdef ENABLE_DEBUG_OUTPUT
                         else
                         {
-                            OutputDebugString(std::format(L"Extension not valid '{}'.\n", extension).c_str());
+                            std::filesystem::path root{ path };
+                            root /= filePath;
+                            OutputDebugString(std::format(L"Failed to take mutex (1 sec) for '{}'.\n", root.generic_wstring()).c_str());
                         }
 #endif
                     }

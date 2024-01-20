@@ -215,7 +215,7 @@
     </Midl>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="readme.txt">
+    <Text Include="CHANGELOG.md">
       <DeploymentContent>false</DeploymentContent>
     </Text>
   </ItemGroup>
