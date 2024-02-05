@@ -7,6 +7,7 @@
 #include "System.h"
 #include "DirectoryInfo.h"
 #include "FileSize.h"
+#include "LocalSettings.h"
 
 #include <ppltasks.h>
 #include <filesystem>
@@ -59,55 +60,8 @@ namespace winrt::PCHealth::implementation
         FreeDiskSpaceTextBlock().Text(Common::FileSize(driveInfo.totalUsedSpace()).ToString());
     }
 
-    wrt::Windows::Foundation::IAsyncAction DriveView::SecondPivotContentGrid_Loading(wrt::Microsoft::UI::Xaml::FrameworkElement const&, wrt::Windows::Foundation::IInspectable const&)
-    {
-        using namespace Common::Filesystem;
-        //LoadingProgressGrid().Visibility(wrt::Microsoft::UI::Xaml::Visibility::Visible);
-
-        co_await wrt::resume_background(); // Do not use display properties after this line without using DispatcherQueue callback.
-
-        uint64_t downloadsSize, documentsSize, musicSize, picturesSize, videosSize;
-        if (driveInfo.isMainDrive())
-        {
-            auto&& libraries = Common::System::GetLibraries().get();
-            downloadsSize = DirectoryInfo(libraries.DownloadsFolder()).GetSize();
-            documentsSize = DirectoryInfo::GetSize(libraries.DocumentsLibraryFolders());
-            musicSize = DirectoryInfo::GetSize(libraries.MusicLibraryFolders());
-            picturesSize = DirectoryInfo::GetSize(libraries.PicturesLibraryFolders());
-            videosSize = DirectoryInfo::GetSize(libraries.VideosLibraryFolders());
-        }
-        else
-        {
-            auto&& libraries = driveInfo.getLibraries();
-            downloadsSize = DirectoryInfo(libraries.DownloadsFolder()).GetSize();
-            documentsSize = DirectoryInfo(libraries.DocumentsLibraryPath()).GetSize();
-            musicSize = DirectoryInfo(libraries.MusicLibraryPath()).GetSize();
-            picturesSize = DirectoryInfo(libraries.PicturesLibraryPath()).GetSize();
-            videosSize = DirectoryInfo(libraries.VideosLibraryPath()).GetSize();
-        }
-
-        uint64_t recycleBinSize = driveInfo.getRecycleBinSize();
-        auto&& sizes = std::array<std::tuple<uint64_t, FileClass>, 7>
-        {
-            std::tuple<uint64_t, FileClass>(downloadsSize, FileClass::Downloads),
-            std::tuple<uint64_t, FileClass>(documentsSize, FileClass::Document),
-            std::tuple<uint64_t, FileClass>(musicSize, FileClass::Music),
-            std::tuple<uint64_t, FileClass>(picturesSize, FileClass::Picture),
-            std::tuple<uint64_t, FileClass>(videosSize, FileClass::Video),
-            std::tuple<uint64_t, FileClass>(recycleBinSize, FileClass::RecycleBin),
-            std::tuple<uint64_t, FileClass>(0, FileClass::System)
-        };
-
-        DispatcherQueue().TryEnqueue([this, sizes]() mutable
-        {
-            FillGradients(sizes, DiskStatsGradients());
-            //LoadingProgressGrid().Visibility(wrt::Microsoft::UI::Xaml::Visibility::Collapsed);
-        });
-    }
-
     winrt::Windows::Foundation::IAsyncAction DriveView::ExtensionsPivotContentGrid_Loading(winrt::Microsoft::UI::Xaml::FrameworkElement const&, winrt::Windows::Foundation::IInspectable const&)
     {
-        std::wcout << L"Drive view loading extensions stats..." << std::endl;
         LoadingProgressGrid().Visibility(wrt::Microsoft::UI::Xaml::Visibility::Visible);
         action = LoadExtensionsStats();
         co_return;
@@ -303,26 +257,29 @@ namespace winrt::PCHealth::implementation
         const std::wstring videoRe = L"^\\.(mp4|mkv|flv|vob|avi|mov|qt|wmv|yuv|m4p|m4v|mpg|mp2|mpeg|mpe|mpv|mpg|m2v|m4v|svi|3gp|3g2|f4v|f4p|f4a|f4b)$";
         const std::wstring systemRe = L"^\\.(dll|exe|msi)$";
         const std::wstring pictureRe = L"^\\.(jpg|png|gif|webp|tiff|psd|raw|bmp|heif|indd|svg|ai|eps)$";
+        const std::wstring documentRe = L"^\\.(pdf|docx|txt|md)$";
+        const std::wstring musicRe = L"^\\.()$";
         std::unordered_map<std::wstring, uint64_t> extensions
         {
             { videoRe, 0 },
             { systemRe, 0 },
-            { pictureRe, 0 }
+            { pictureRe, 0 },
+            { documentRe, 0 }
         };
 
         driveInfo.getExtensionsStats(&extensions);
 
-        DispatcherQueue().TryEnqueue([this, videosSize = extensions[videoRe], system = extensions[systemRe]]
+        DispatcherQueue().TryEnqueue([this, videosSize = extensions[videoRe], systemFilesSize = extensions[systemRe], documentsSize = extensions[documentRe], picturesSize = extensions[pictureRe]]
         {
             auto&& sizes = std::array<std::tuple<uint64_t, FileClass>, 7>
             {
                 std::tuple<uint64_t, FileClass>(0, FileClass::Downloads),
-                    std::tuple<uint64_t, FileClass>(0, FileClass::Document),
+                    std::tuple<uint64_t, FileClass>(documentsSize, FileClass::Document),
                     std::tuple<uint64_t, FileClass>(0, FileClass::Music),
-                    std::tuple<uint64_t, FileClass>(0, FileClass::Picture),
+                    std::tuple<uint64_t, FileClass>(picturesSize, FileClass::Picture),
                     std::tuple<uint64_t, FileClass>(videosSize, FileClass::Video),
                     std::tuple<uint64_t, FileClass>(driveInfo.getRecycleBinSize(), FileClass::RecycleBin),
-                    std::tuple<uint64_t, FileClass>(system, FileClass::System)
+                    std::tuple<uint64_t, FileClass>(systemFilesSize, FileClass::System)
             };
             FillGradients(sizes, ExtensionsStatsGradients());
             LoadingProgressGrid().Visibility(wrt::Microsoft::UI::Xaml::Visibility::Collapsed);

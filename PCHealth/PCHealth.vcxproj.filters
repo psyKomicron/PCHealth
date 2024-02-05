@@ -14,10 +14,16 @@
     <Page Include="Tag.xaml">
       <Filter>Controls</Filter>
     </Page>
+    <Page Include="WatchedFolderView.xaml">
+      <Filter>Controls</Filter>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Midl Include="App.idl" />
     <Midl Include="MainWindow.idl" />
+    <Midl Include="DatedMessageViewModel.idl">
+      <Filter>ViewModels</Filter>
+    </Midl>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -26,22 +32,31 @@
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="DriveInfo.cpp">
-      <Filter>Common\Filesystem</Filter>
+      <Filter>Common\filesystem</Filter>
     </ClCompile>
     <ClCompile Include="LibraryPathes.cpp">
-      <Filter>Common\Filesystem</Filter>
+      <Filter>Common\filesystem</Filter>
     </ClCompile>
     <ClCompile Include="DirectoryInfo.cpp">
-      <Filter>Common\Filesystem</Filter>
+      <Filter>Common\filesystem</Filter>
     </ClCompile>
     <ClCompile Include="DirectorySizeCalculator.cpp">
-      <Filter>Common\Filesystem</Filter>
+      <Filter>Common\filesystem</Filter>
     </ClCompile>
     <ClCompile Include="FileSize.cpp">
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="UserLibraries.cpp">
-      <Filter>Common\Filesystem</Filter>
+      <Filter>Common\filesystem</Filter>
+    </ClCompile>
+    <ClCompile Include="LocalSettings.cpp">
+      <Filter>Common\filesystem</Filter>
+    </ClCompile>
+    <ClCompile Include="DirectoryWatcher.cpp">
+      <Filter>Common\filesystem</Filter>
+    </ClCompile>
+    <ClCompile Include="Win32FileInformation.cpp">
+      <Filter>Common\filesystem</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -53,25 +68,34 @@
       <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="DriveInfo.h">
-      <Filter>Common\Filesystem</Filter>
+      <Filter>Common\filesystem</Filter>
     </ClInclude>
     <ClInclude Include="DriveTechnology.h">
-      <Filter>Common\Filesystem</Filter>
+      <Filter>Common\filesystem</Filter>
     </ClInclude>
     <ClInclude Include="LibraryPathes.h">
-      <Filter>Common\Filesystem</Filter>
+      <Filter>Common\filesystem</Filter>
     </ClInclude>
     <ClInclude Include="DirectoryInfo.h">
-      <Filter>Common\Filesystem</Filter>
+      <Filter>Common\filesystem</Filter>
     </ClInclude>
     <ClInclude Include="DirectorySizeCalculator.h">
-      <Filter>Common\Filesystem</Filter>
+      <Filter>Common\filesystem</Filter>
     </ClInclude>
     <ClInclude Include="FileSize.h">
       <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="UserLibraries.h">
-      <Filter>Common\Filesystem</Filter>
+      <Filter>Common\filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="LocalSettings.h">
+      <Filter>Common\filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="DirectoryWatcher.h">
+      <Filter>Common\filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="Win32FileInformation.h">
+      <Filter>Common\filesystem</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -107,7 +131,10 @@
     <Filter Include="Controls">
       <UniqueIdentifier>{e0fc23b5-757f-4e9b-80b7-d7ca2e01ef35}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Common\Filesystem">
+    <Filter Include="ViewModels">
+      <UniqueIdentifier>{fef8c1af-90e3-4796-b789-4559f08fb34c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common\filesystem">
       <UniqueIdentifier>{798a7fcd-fca6-4bf3-a384-22297b4378aa}</UniqueIdentifier>
     </Filter>
   </ItemGroup>

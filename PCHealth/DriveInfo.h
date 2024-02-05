@@ -1,7 +1,9 @@
 #pragma once
 #include "DriveTechnology.h"
 #include "LibraryPathes.h"
+
 #include <string>
+#include <mutex>
 
 namespace Common::Filesystem
 {

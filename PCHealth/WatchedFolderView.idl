@@ -1,0 +1,12 @@
+namespace PCHealth
+{
+    [default_interface]
+    runtimeclass WatchedFolderView : Microsoft.UI.Xaml.Controls.UserControl, Microsoft.UI.Xaml.Data.INotifyPropertyChanged
+    {
+        WatchedFolderView();
+        WatchedFolderView(String folderPath);
+        
+        String FolderPath;
+        Windows.Foundation.Collections.IObservableVector<String> Items{ get; };
+    }
+}

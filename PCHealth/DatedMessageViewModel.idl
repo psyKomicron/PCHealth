@@ -1,0 +1,12 @@
+namespace PCHealth
+{
+    [bindable]
+    [default_interface]
+    runtimeclass DatedMessageViewModel 
+    {
+        DatedMessageViewModel();
+
+        String Message;
+        String TimeStamp;
+    }
+}
