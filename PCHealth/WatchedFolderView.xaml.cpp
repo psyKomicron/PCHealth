@@ -20,7 +20,20 @@ namespace winrt::PCHealth::implementation
         : WatchedFolderView()
     {
         _folderPath = folderPath;
-        std::function<void(std::wstring)> func = [this](std::wstring e) { };
+        auto&& func = [this](std::vector<pchealth::filesystem::Win32FileInformation>& e)
+        {
+            std::wstring pathes = L"";
+            for (auto&& fileInfo : e)
+            {
+                pathes += fileInfo.name() + L", ";
+            }
+
+            winrt::PCHealth::MainWindow::Current().PostMessageToWindow(
+                std::format(L"Directory watcher detected changes in '{}', {} file(s) changed : {}", watcherPtr->path(), e.size(), pathes),
+                std::format(L"'{}': {} file(s) changed.", watcherPtr->path(), e.size()),
+                false
+            );
+        };
         //std::function<void(const WatchedFolderView&, std::wstring)> objectFunc = &WatchedFolderView::ChangesDetected;
         watcherPtr = std::unique_ptr<pchealth::filesystem::DirectoryWatcher>(new pchealth::filesystem::DirectoryWatcher(std::wstring(_folderPath), func));
     }
@@ -160,9 +173,13 @@ namespace winrt::PCHealth::implementation
         }
     }
 
-    void WatchedFolderView::WatchChangesToggleSwitch_Toggled(winrt::Windows::Foundation::IInspectable const&, winrt::Microsoft::UI::Xaml::RoutedEventArgs const&)
+    winrt::Windows::Foundation::IAsyncAction WatchedFolderView::WatchChangesToggleSwitch_Toggled(winrt::Windows::Foundation::IInspectable const&, winrt::Microsoft::UI::Xaml::RoutedEventArgs const&)
     {
-        if (WatchChangesToggleSwitch().IsOn())
+        bool enable = WatchChangesToggleSwitch().IsOn();
+        winrt::PCHealth::MainWindow::Current().PostMessageToWindow(L"Activated watcher for '" + _folderPath + L"'.", L"Activated watcher for '" + _folderPath + L"'.", false);
+
+        co_await winrt::resume_background();
+        if (enable)
         {
             watcherPtr->startWatching();
         }

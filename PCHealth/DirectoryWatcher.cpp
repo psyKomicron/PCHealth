@@ -1,27 +1,37 @@
 #include "pch.h"
 #include "DirectoryWatcher.h"
 
+#define PARALLEL_FOR_EACH
+
 #include "System.h"
+#include "utilities.h"
+
+#include <ppl.h>
+
+#include <filesystem>
+#include <chrono>
+
 
 namespace pchealth::filesystem
 {
-    DirectoryWatcher::DirectoryWatcher(const std::wstring& path, const std::function<void(std::wstring)>& callback)
+    DirectoryWatcher::DirectoryWatcher(const std::wstring& path, const std::function<void(std::vector<pchealth::filesystem::Win32FileInformation>&)>& callback)
     {
         _path = path;
+        callbackFunc = callback;
     }
 
     DirectoryWatcher::~DirectoryWatcher()
     {
         if (directoryHandle != INVALID_HANDLE_VALUE)
         {
+            threadRunning.exchange(false);
             CancelIoEx(directoryHandle, nullptr);
-        }
-
-        if (threadStarted.load())
-        {
-            shutdownFlag.wait(true);
+            threadExitFlag.wait(true);
+            if (notificationThread.joinable())
+            {
+                notificationThread.join();
+            }
             CloseHandle(directoryHandle);
-            notificationThread.join();
         }
     }
 
@@ -32,15 +42,16 @@ namespace pchealth::filesystem
 
     void DirectoryWatcher::startWatching()
     {
-        if (!threadStarted.load())
+        if (!threadRunning.load())
         {
-            oldEntries = enumerateDirectory();
+            enumerateDirectory(oldEntries);
 
             directoryHandle = CreateFile(_path.c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr);
             if (directoryHandle != INVALID_HANDLE_VALUE)
             {
                 notificationThread = std::thread(&DirectoryWatcher::_threadFunc, this);
-                OutputDebugString(L"Started watcher.\n");
+                threadRunning.wait(true);
+                OutputDebug(L"Started watcher.");
             }
             else
             {
@@ -51,72 +62,80 @@ namespace pchealth::filesystem
 
     void DirectoryWatcher::stopWatching()
     {
-        if (threadStarted.load())
-        {
-            // TODO: Use RAII to stop watching or function and RAII ?
-        }
+        // TODO: Use RAII to stop watching or function and RAII ?
     }
 
 
-    void DirectoryWatcher::fireCallback(FILE_NOTIFY_INFORMATION* info)
+    std::vector<Win32FileInformation> DirectoryWatcher::detectDirectoryChanges
+#ifdef TEST
+    (const std::array<FILE_NOTIFY_EXTENDED_INFORMATION, 100>& fileInformations, const uint64_t& count)
+#else
+    (const std::array<FILE_NOTIFY_INFORMATION, 100>& fileInformations, const uint64_t& count)
+#endif
     {
-        // TODO: Call callback and give formatted info the consumer.
-    }
-
-    std::vector<std::wstring> DirectoryWatcher::detectDirectoryChanges(const std::optional<FILE_NOTIFY_INFORMATION*> fileInformation)
-    {
-        if (fileInformation.has_value())
+        std::vector<pchealth::filesystem::Win32FileInformation> changes{};
+        if (count > 0)
         {
-            auto&& fileInfo = fileInformation.value();
-            switch (fileInfo->Action)
+            OutputDebug(L"Received notification for " + std::to_wstring(count) + L" changes.");
+            for (size_t i = 0; i < count; i++)
             {
-                case FILE_ACTION_ADDED:
-                    OutputDebugString(L"FILE ACTION ADDED\n");
-                    break;
-                case FILE_ACTION_REMOVED:
-                    OutputDebugString(L"FILE ACTION REMOVED\n");
-                    break;
-                case FILE_ACTION_MODIFIED:
-                    OutputDebugString(L"FILE ACTION MODIFIED\n");
-                    break;
+                auto&& fileInfo = fileInformations[i];
+                auto&& fileName = std::wstring(fileInfo.FileName);
+                try
+                {
+                    auto&& win32FileInformation = pchealth::filesystem::Win32FileInformation(fileInfo, directoryHandle);
+
+                    switch (fileInfo.Action)
+                    {
+                        case FILE_ACTION_ADDED:
+                            OutputDebug(std::format(L"'{}' file added, +{} bytes to directory size.", win32FileInformation.path(), win32FileInformation.size()));
+                            break;
+                        case FILE_ACTION_REMOVED:
+                            OutputDebug(std::format(L"'{}' file removed, -{} bytes to directory size.", win32FileInformation.path(), win32FileInformation.size()));
+                            break;
+                        case FILE_ACTION_MODIFIED:
+                            OutputDebug(std::format(L"'{}' file modified, new size: {}.", win32FileInformation.path(), win32FileInformation.size()));
+                            break;
+                    }
+
+                    changes.push_back(win32FileInformation);
+                }
+                catch (const winrt::hresult_error& err)
+                {
+                    OutputDebug(std::format(L"Failed to create pchealth::filesystem::Win32FileInformation from FILE_NOTIFY_EXTENDED_INFORMATION : '{}'.", err.message()));
+                }
+                catch (...)
+                {
+                    OutputDebug(L"Failed to create pchealth::filesystem::Win32FileInformation from FILE_NOTIFY_EXTENDED_INFORMATION : unknown error.");
+                }
             }
-            return {};
         }
         else
         {
-            auto entries = enumerateDirectory();
-            if (entries.empty())
+            concurrency::concurrent_vector<Win32FileInformation> entries{};
+            enumerateDirectory(entries);
+
+            if (!entries.empty())
             {
-                return std::vector<std::wstring>
-                {
-                    L"*"
-                };
-            }
-            else
-            {
-                auto changes = std::vector<std::wstring>();
                 for (size_t i = 0; i < entries.size(); i++)
                 {
-                    bool entryRemoved = true;
                     if (!entries[i].directory())
                     {
                         bool newFile = true;
                         for (size_t ii = 0; ii < oldEntries.size(); ii++)
                         {
-                            if (entries[i].name() == oldEntries[ii].name())
+                            if (entries[i].path() == oldEntries[ii].path())
                             {
                                 newFile = false;
-                                entryRemoved = false;
                                 if (entries[i].size() != oldEntries[ii].size())
                                 {
-                                    changes.push_back(entries[i].name());
+                                    changes.push_back(entries[i]);
 
-                                    OutputDebugString(
+                                    OutputDebug(
                                         std::format(L"Change detected ({}{} bytes) : '{}'\n", 
                                             (oldEntries[ii].size() < entries[i].size() ? L"+" : L""),
                                             static_cast<int64_t>(entries[i].size()) - oldEntries[ii].size(),
-                                            entries[i].name())
-                                        .c_str());
+                                            entries[i].name()));
                                 }
                                 break;
                             }
@@ -124,8 +143,8 @@ namespace pchealth::filesystem
 
                         if (newFile)
                         {
-                            changes.push_back(entries[i].name());
-                            OutputDebugString(std::format(L"New entry detected : '{}'\n", entries[i].name()).c_str());
+                            changes.push_back(entries[i]);
+                            OutputDebug(std::format(L"New entry detected : '{}'\n", entries[i].name()));
                         }
                     }
                 }
@@ -135,7 +154,7 @@ namespace pchealth::filesystem
                     bool exists = false;
                     for (size_t ii = 0; ii < entries.size(); ii++)
                     {
-                        if (oldEntries[i].name() == entries[ii].name())
+                        if (oldEntries[i].path() == entries[ii].path())
                         {
                             exists = true;
                             break;
@@ -144,48 +163,79 @@ namespace pchealth::filesystem
 
                     if (!exists)
                     {
-                        OutputDebugString(std::format(L"Entry removed : '{}', -{} bytes.\n", oldEntries[i].name(), oldEntries[i].size()).c_str());
+                        OutputDebug(std::format(L"Entry removed : '{}', -{} bytes.\n", oldEntries[i].name(), oldEntries[i].size()));
+                        changes.push_back(oldEntries[i]);
                     }
                 }
 
                 oldEntries = entries;
-                return changes;
-            }
+            }    
         }
+
+        return changes;
     }
 
-    std::vector<Win32FileInformation> DirectoryWatcher::enumerateDirectory()
+    void DirectoryWatcher::enumerateDirectory(concurrency::concurrent_vector<Win32FileInformation>& entries)
     {
-        auto entries = std::vector<Win32FileInformation>();
-        WIN32_FIND_DATA findData{};
-        HANDLE findHandle = nullptr;
+#ifdef ENABLE_DEBUG_OUTPUT
+        auto clock = std::chrono::high_resolution_clock::now();
+#endif
+
         if (!_path.ends_with(L"\\"))
         {
-            findHandle = FindFirstFile((_path + L"\\*").c_str(), &findData);
+            _path += L"\\";
         }
-        else
-        {
-            findHandle = FindFirstFile((_path + L"*").c_str(), &findData);
-        }
+        flattenDirectory(_path, entries);
 
+#ifdef ENABLE_DEBUG_OUTPUT
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - clock);
+        OutputDebug(std::format(L"(watcher '{}') Elapsed {}µs for {} entries.", _path, duration.count(), entries.size()));
+#endif
+    }
+
+    void DirectoryWatcher::flattenDirectory(const std::wstring& path, concurrency::concurrent_vector<Win32FileInformation>& entries)
+    {
+        WIN32_FIND_DATA findData{};
+        HANDLE findHandle = nullptr;
+        findHandle = FindFirstFile(std::format(L"{}*", path).c_str(), &findData);
+
+        std::vector<std::wstring> directories{};
         if (findHandle != INVALID_HANDLE_VALUE)
         {
             try
             {
                 do
                 {
-                    std::wstring filePath = std::wstring(findData.cFileName);
-                    if (filePath != L"." && filePath != L"..")
+                    auto fileInfo = Win32FileInformation(findData, path);
+                    if (!fileInfo.isNavigator())
                     {
-                        entries.push_back(Win32FileInformation(&findData));
+                        if (!fileInfo.directory())
+                        {
+                            entries.push_back(std::move(fileInfo));
+                        }
+                        else
+                        { 
+                            std::filesystem::path parentDirectory{ path };
+                            parentDirectory /= fileInfo.name();
+                            parentDirectory /= L"";
+                            directories.push_back(parentDirectory.wstring());
+                        }
                     }
                 } while (FindNextFile(findHandle, &findData));
             }
             catch (...) { }
             FindClose(findHandle);
-        }
 
-        return entries;
+            concurrency::parallel_for_each(std::begin(directories), std::end(directories), [this, &entries] (const std::wstring& directory)
+            {
+                flattenDirectory(directory, entries);
+            });
+        }
+    }
+
+    void DirectoryWatcher::fireCallback(std::vector<pchealth::filesystem::Win32FileInformation>& info)
+    {
+        callbackFunc(info);
     }
 
     /**
@@ -193,24 +243,41 @@ namespace pchealth::filesystem
     */
     void DirectoryWatcher::_threadFunc()
     {
-        OutputDebugString(L"Notification thread started.\n");
-        unsigned long bytesReturned = 0;
-        while (!shutdownFlag.load())
+        OutputDebug(std::format(L"(watcher '{}') Notification thread started.", _path));
+
+        threadRunning.exchange(true);
+
+        while (true)
         {
-            if (ReadDirectoryChangesW(directoryHandle, nullptr, 0, false, FILE_NOTIFY_CHANGE_SIZE | FILE_NOTIFY_CHANGE_FILE_NAME, &bytesReturned, nullptr, nullptr))
+            unsigned long bytesReturned = 0;
+            const uint32_t flags = FILE_NOTIFY_CHANGE_SIZE | FILE_NOTIFY_CHANGE_FILE_NAME;
+#ifdef TEST
+            FILE_NOTIFY_EXTENDED_INFORMATION extendedChangesBuffer[100]{};
+
+            if (ReadDirectoryChangesExW(directoryHandle, extendedChangesBuffer, sizeof(extendedChangesBuffer), true, flags, &bytesReturned, nullptr, nullptr, READ_DIRECTORY_NOTIFY_INFORMATION_CLASS::ReadDirectoryNotifyExtendedInformation))
             {
-                OutputDebugString(std::format(L"'{}' change detected.\n", _path).c_str());
-                detectDirectoryChanges({});
+                auto&& changes = detectDirectoryChanges(std::to_array(extendedChangesBuffer), bytesReturned / sizeof(FILE_NOTIFY_EXTENDED_INFORMATION));
+                fireCallback(changes);
             }
+#else
+            FILE_NOTIFY_INFORMATION changesBuffer[100]{};
+            if (ReadDirectoryChangesW(directoryHandle, changesBuffer, sizeof(changesBuffer), true, flags, &bytesReturned, nullptr, nullptr))
+            {
+                detectDirectoryChanges(std::to_array(changesBuffer), bytesReturned / sizeof(FILE_NOTIFY_INFORMATION));
+            }
+#endif // TEST
             else
             {
-                //winrt::check_hresult(HRESULT_FROM_WIN32(GetLastError()));
+                /*if (threadRunning.load())
+                {
+                    winrt::check_hresult(HRESULT_FROM_WIN32(GetLastError()));
+                }*/
                 break;
             }
         }
 
-        OutputDebugString(L"Notification thread exited.\n");
-        threadStarted.exchange(true);
-        threadStarted.notify_one();
+        OutputDebug(std::format(L"(watcher '{}') Notification thread exited.", _path));
+        //threadRunning.exchange(false);
+        threadExitFlag.notify_one();
     }
 }

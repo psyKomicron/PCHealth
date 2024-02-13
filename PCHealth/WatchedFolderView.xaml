@@ -38,7 +38,8 @@
                     <VisualState.Setters>
                         <Setter Target="FilesListView.Visibility" Value="Collapsed"/>
                         <Setter Target="FilesGridView.Visibility" Value="Collapsed"/>
-                        <Setter Target="HeaderGrid.Visibility" Value="Collapsed"/>
+                        <Setter Target="HeaderGrid.Visibility" Value="Visible"/>
+                        <!--<Setter Target="HeaderGrid.Visibility" Value="Collapsed"/>-->
                         <Setter Target="NoFilesTextBlock.Visibility" Value="Visible"/>
                         <Setter Target="ErrorFontIcon.Visibility" Value="Visible"/>
                         <Setter Target="LoadingProgressRing.Visibility" Value="Visible"/>
@@ -99,8 +100,6 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Text="Files" Style="{StaticResource TitleTextBlockStyle}" VerticalAlignment="Top" Margin="0,0,0,15"/>
-
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,15" Grid.Column="2">
                     <ToggleSwitch x:Name="WatchChangesToggleSwitch" Toggled="WatchChangesToggleSwitch_Toggled"/>
                     <Slider 
@@ -128,6 +127,8 @@
                         <FontIcon Glyph="&#xE8B9;" FontSize="16"/>
                     </ToggleButton>
                 </StackPanel>
+
+                <TextBlock Text="Files" Style="{StaticResource TitleTextBlockStyle}" VerticalAlignment="Top" Margin="0,0,0,15"/>
             </Grid>
 
             <ListView 
@@ -157,7 +158,7 @@
                 Loading="FilesGridView_Loading">
             </GridView>
 
-            <TextBlock x:Name="NoFilesTextBlock" Text="No files" Visibility="Collapsed" x:Load="False" Style="{StaticResource SubheaderTextBlockStyle}"/>
+            <TextBlock x:Name="NoFilesTextBlock" Text="No files" Visibility="Collapsed" x:Load="False" Style="{StaticResource SubheaderTextBlockStyle}" Grid.Row="1"/>
         </Grid>
     </Expander>
 </UserControl>

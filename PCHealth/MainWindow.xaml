@@ -286,9 +286,11 @@
                                                         </Border>
                                                         <FontIcon Glyph="&#xe76c;" FontSize="14"/>
                                                         <TextBlock 
+                                                            MaxWidth="300"
                                                             Text="{x:Bind Message}" 
                                                             FontSize="12" 
-                                                            VerticalAlignment="Center"/>
+                                                            VerticalAlignment="Center"
+                                                            TextWrapping="Wrap"/>
                                                     </StackPanel>
                                                 </DataTemplate>
                                             </ListView.ItemTemplate>
@@ -299,7 +301,7 @@
 
                             <Border Width="2" Background="{ThemeResource AppBarSeparatorForegroundThemeBrush}" Grid.Column="1" VerticalAlignment="Stretch" CornerRadius="2"/>
 
-                            <TextBlock x:Name="BottomStatusText" Grid.Column="2" FontSize="12" VerticalAlignment="Center" IsTextSelectionEnabled="True"/>
+                            <TextBlock x:Name="BottomStatusText" Grid.Column="2" FontSize="12" VerticalAlignment="Center" IsTextSelectionEnabled="True" Margin="10,0,0,0"/>
                         </Grid>
 
                         <StackPanel Grid.Column="2" VerticalAlignment="Stretch" Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right">

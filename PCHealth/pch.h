@@ -1,5 +1,4 @@
 #pragma once
-#pragma once
 #include <windows.h>
 #include <unknwn.h>
 #include <restrictederrorinfo.h>
@@ -27,3 +26,6 @@
 #include <wil/cppwinrt_helpers.h>
 #include <winrt/Windows.Storage.h>
 
+#ifdef _DEBUG
+#define ENABLE_DEBUG_OUTPUT
+#endif

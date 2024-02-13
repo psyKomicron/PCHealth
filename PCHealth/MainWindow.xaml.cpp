@@ -51,8 +51,12 @@ namespace Xaml
 
 namespace winrt::PCHealth::implementation
 {
+    winrt::PCHealth::MainWindow MainWindow::singleton{ nullptr };
+
     MainWindow::MainWindow()
     {
+        singleton = *this;
+
         InitializeComponent();
         InitializeWindow();
 
@@ -445,7 +449,7 @@ namespace winrt::PCHealth::implementation
 
     void MainWindow::PostMessageToWindow(const winrt::param::hstring& longMessage, const winrt::param::hstring& shortMessage, bool recursive)
     {
-        OutputDebugString((winrt::hstring(longMessage) + L"\n").c_str());
+        //OutputDebugString((winrt::hstring(longMessage) + L"\n").c_str());
 
         if (!DispatcherQueue().HasThreadAccess())
         {

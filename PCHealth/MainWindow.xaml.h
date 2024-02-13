@@ -2,8 +2,6 @@
 
 #include "MainWindow.g.h"
 
-
-
 namespace winrt::PCHealth::implementation
 {
     struct MainWindow : MainWindowT<MainWindow>
@@ -11,11 +9,18 @@ namespace winrt::PCHealth::implementation
     public:
         MainWindow();
 
+        static winrt::PCHealth::MainWindow Current()
+        {
+            return singleton;
+        };
+
         double SystemGeneralHealth();
         void SystemGeneralHealth(const double& value);
 
         inline winrt::event_token PropertyChanged(Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const& value) { return e_propertyChanged.add(value); };
         inline void PropertyChanged(winrt::event_token const& token) { e_propertyChanged.remove(token); };
+
+        void PostMessageToWindow(const winrt::param::hstring& longMessage, const winrt::param::hstring& shortMessage, bool recursive = false);
 
         winrt::Windows::Foundation::IAsyncAction RootGrid_Loading(winrt::Microsoft::UI::Xaml::FrameworkElement const& sender, winrt::Windows::Foundation::IInspectable const& args);
         void ScrollViewer_Loaded(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);
@@ -29,6 +34,8 @@ namespace winrt::PCHealth::implementation
         void AppBarSaveButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);
 
     private:
+        static winrt::PCHealth::MainWindow singleton;
+
         double systemGeneralHealth = 0.0;
         Windows::Foundation::Collections::IObservableVector<winrt::hstring> drivesList{ winrt::single_threaded_observable_vector<winrt::hstring>() };
         bool usingCustomTitleBar = false;
@@ -50,7 +57,6 @@ namespace winrt::PCHealth::implementation
         void SetDragRectangles();
         void AppWindow_Closing(winrt::Microsoft::UI::Windowing::AppWindow, winrt::Microsoft::UI::Windowing::AppWindowClosingEventArgs);
         void AddWatchedFolder(const winrt::hstring& path);
-        void PostMessageToWindow(const winrt::param::hstring& longMessage, const winrt::param::hstring& shortMessage, bool recursive = false);
     };
 }
 

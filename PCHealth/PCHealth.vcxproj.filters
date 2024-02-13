@@ -58,6 +58,7 @@
     <ClCompile Include="Win32FileInformation.cpp">
       <Filter>Common\filesystem</Filter>
     </ClCompile>
+    <ClCompile Include="utilities.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -97,6 +98,7 @@
     <ClInclude Include="Win32FileInformation.h">
       <Filter>Common\filesystem</Filter>
     </ClInclude>
+    <ClInclude Include="utilities.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\Wide310x150Logo.scale-200.png">
