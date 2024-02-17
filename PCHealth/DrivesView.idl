@@ -1,0 +1,9 @@
+namespace PCHealth
+{
+    [default_interface]
+    runtimeclass DrivesView : Microsoft.UI.Xaml.Controls.UserControl
+    {
+        DrivesView();
+        Int32 MyProperty;
+    }
+}

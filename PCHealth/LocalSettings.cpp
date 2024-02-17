@@ -3,7 +3,7 @@
 
 #include <string>
 
-namespace PcHealth::Filesystem
+namespace pchealth::storage
 {
     const bool SHOW_ALL_CONTAINERS = true;
 
@@ -21,42 +21,21 @@ namespace PcHealth::Filesystem
 
     void LocalSettings::saveList(const winrt::hstring& key, const std::vector<winrt::hstring> list)
     {
+        winrt::Windows::Storage::ApplicationDataContainer container{ nullptr };
         if (localSettings.Containers().HasKey(key))
         {
-            auto container = localSettings.Containers().Lookup(key);
-            auto values = container.Values();
-            bool contains = false;
-            for (size_t i = 0; i < list.size(); i++)
-            {
-                winrt::hstring existingKey = L"";
-                for (auto&& keyValuePair : values)
-                {
-                    winrt::hstring value = keyValuePair.Value().as<winrt::hstring>();
-                    if (list[i] == value)
-                    {
-                        existingKey = keyValuePair.Key();
-                        contains = true;
-                        break;
-                    }
-                }
-
-                if (!contains)
-                {
-                    std::hash<winrt::hstring> hasher{};
-                    existingKey = winrt::to_hstring(hasher(list[i]));
-                }
-
-                container.Values().Insert(key, winrt::box_value(list[i]));
-            }
+            container = localSettings.Containers().Lookup(key);
+            container.Values().Clear();
         }
         else
         {
-            winrt::Windows::Storage::ApplicationDataContainer container = createContainer(key);
-            for (size_t i = 0; i < list.size(); i++)
-            {
-                std::hash<winrt::hstring> hasher{};
-                container.Values().Insert(winrt::to_hstring(hasher(list[i])), winrt::box_value(list[i]));
-            }
+            container = createContainer(key);
+        }
+
+        for (size_t i = 0; i < list.size(); i++)
+        {
+            std::hash<winrt::hstring> hasher{};
+            container.Values().Insert(winrt::to_hstring(hasher(list[i])), winrt::box_value(list[i]));
         }
     }
 
@@ -83,6 +62,18 @@ namespace PcHealth::Filesystem
 
         return list;
     }
+
+    void LocalSettings::saveObject(const winrt::hstring& key, const std::map<winrt::hstring, winrt::hstring>& objectAsMap)
+    {
+        winrt::Windows::Storage::ApplicationDataCompositeValue composite{};
+        for (auto&& pair : objectAsMap)
+        {
+            composite.Insert(pair.first, winrt::box_value(pair.second));
+        }
+
+        localSettings.Values().Insert(;
+    }
+
 
     winrt::Windows::Storage::ApplicationDataContainer LocalSettings::createContainer(const winrt::hstring& key)
     {

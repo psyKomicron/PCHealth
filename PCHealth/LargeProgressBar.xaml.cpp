@@ -11,7 +11,6 @@ namespace winrt::PCHealth::implementation
 {
     LargeProgressBar::LargeProgressBar()
     {
-        InitializeComponent();
     }
 
     void LargeProgressBar::Value(double const& value)

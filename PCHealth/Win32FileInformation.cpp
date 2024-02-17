@@ -10,7 +10,7 @@ namespace pchealth::filesystem
     Win32FileInformation::Win32FileInformation(const WIN32_FIND_DATA& findData, const std::wstring& parent)
     {
         _name = std::wstring(findData.cFileName);
-        _size = (static_cast<int64_t>(findData.nFileSizeHigh) << 32) | findData.nFileSizeLow;
+        _size = pchealth::utilities::convert(findData.nFileSizeHigh, findData.nFileSizeLow);
         _directory = findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
         _path = (std::filesystem::path(parent) /= _name).wstring();
     }

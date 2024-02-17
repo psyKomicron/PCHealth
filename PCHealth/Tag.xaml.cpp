@@ -32,7 +32,6 @@ namespace winrt::PCHealth::implementation
 
     Tag::Tag()
     {
-        InitializeComponent();
     }
 
     winrt::hstring Tag::Text() const

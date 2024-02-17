@@ -25,7 +25,3 @@
 #include <winrt/Microsoft.UI.Dispatching.h>
 #include <wil/cppwinrt_helpers.h>
 #include <winrt/Windows.Storage.h>
-
-#ifdef _DEBUG
-#define ENABLE_DEBUG_OUTPUT
-#endif

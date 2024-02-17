@@ -1,0 +1,25 @@
+namespace PCHealth
+{
+    enum ClipboardTriggerAction
+    {
+        None = 0,
+        OpenWebBrowser = 1,
+        PipeClipboardContentToExe = 2,
+        SaveToFile = 4,
+        SaveToHistory = 8
+    };
+
+    [bindable]
+    [default_interface]
+    runtimeclass ClipboardTrigger 
+    {
+        ClipboardTrigger();
+        
+        String Match;
+        String Query;
+        String ActionText;
+        ClipboardTriggerAction Action;
+        Boolean ShowNotification;
+        String Name;
+    }
+}

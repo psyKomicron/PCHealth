@@ -1,5 +1,5 @@
 #pragma once
-namespace PcHealth::Filesystem
+namespace pchealth::storage
 {
     class LocalSettings
     {
@@ -8,6 +8,11 @@ namespace PcHealth::Filesystem
         {
             localSettings = container;
         };
+
+        winrt::Windows::Storage::ApplicationDataContainer openOrCreate(const winrt::hstring& key);
+        void saveList(const winrt::hstring& key, const std::vector<winrt::hstring> list);
+        std::vector<winrt::hstring> restoreList(const winrt::hstring& key);
+        void saveObject(const winrt::hstring& key, const std::map<winrt::hstring, winrt::hstring>& objectAsMap);
 
         template <typename T>
         std::optional<T> tryLookup(const winrt::hstring& key)
@@ -35,10 +40,6 @@ namespace PcHealth::Filesystem
                 return std::optional<T>();
             }
         }
-
-        winrt::Windows::Storage::ApplicationDataContainer openOrCreate(const winrt::hstring& key);
-        void saveList(const winrt::hstring& key, const std::vector<winrt::hstring> list);
-        std::vector<winrt::hstring> restoreList(const winrt::hstring& key);
 
     private:
         winrt::Windows::Storage::ApplicationDataContainer localSettings{ nullptr };

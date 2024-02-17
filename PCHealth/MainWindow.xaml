@@ -7,7 +7,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Grid x:Name="RootGrid">
+    <Grid x:Name="RootGrid" Loading="RootGrid_Loading">
         <Grid.RowDefinitions>
             <RowDefinition MinHeight="30" MaxHeight="30"/>
             <RowDefinition Height="*"/>
@@ -22,14 +22,14 @@
             </Grid.ColumnDefinitions>
         </Grid>
 
-        <Pivot Grid.Row="1" SelectedIndex="1">
+        <Pivot Grid.Row="1" SelectedIndex="2">
             <PivotItem Header="Drives">
                 <Grid>
                     <ScrollViewer>
                         <Grid
                             RowSpacing="20"
                             Padding="5"
-                            Loading="RootGrid_Loading">
+                            Loading="DrivesGrid_Loading">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition/>
                             </Grid.ColumnDefinitions>
@@ -326,6 +326,12 @@
                         </StackPanel>
                     </ContentDialog>
                 </Grid>
+            </PivotItem>
+
+            <PivotItem Header="Clipboard">
+                <ScrollViewer>
+                    <local:ClipboardManagerView/>
+                </ScrollViewer>
             </PivotItem>
         </Pivot>
 

@@ -30,6 +30,17 @@
                 <Setter Property="Width" Value="37"/>
             </Style>
 
+            <Style TargetType="Expander">
+                <Setter Property="MinHeight" Value="60" />
+                <Setter Property="CornerRadius" Value="{StaticResource ControlCornerRadius}" />
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                <Setter Property="HorizontalAlignment" Value="Stretch" />
+            </Style>
+
+            <Style TargetType="TextBlock" BasedOn="{StaticResource BaseTextBlockStyle}">
+                <Setter Property="TextWrapping" Value="Wrap" />
+            </Style>
+
             <ResourceDictionary x:Key="HeatmapColors">
                 <Color x:Key="DocsHeatmapColor">Goldenrod</Color>
                 <Color x:Key="ImagesHeatmapColor">Tomato</Color>

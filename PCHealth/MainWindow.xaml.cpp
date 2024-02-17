@@ -9,6 +9,8 @@
 #include "FileSize.h"
 #include "LibraryPathes.h"
 #include "LocalSettings.h"
+#include "HotKey.h"
+#include "utilities.h"
 
 #include <shellapi.h>
 #include <ppl.h>
@@ -57,9 +59,6 @@ namespace winrt::PCHealth::implementation
     {
         singleton = *this;
 
-        InitializeComponent();
-        InitializeWindow();
-
         using namespace std::chrono_literals;
         timer = DispatcherQueue().CreateTimer();
         timer.Interval(15s);
@@ -68,6 +67,7 @@ namespace winrt::PCHealth::implementation
         {
             BottomStatusText().Text(L"");
         });
+        //InitializeComponent();
     }
 
     double MainWindow::SystemGeneralHealth()
@@ -81,50 +81,9 @@ namespace winrt::PCHealth::implementation
         e_propertyChanged(*this, Microsoft::UI::Xaml::Data::PropertyChangedEventArgs(L"SystemGeneralHealth"));
     }
 
-    winrt::Windows::Foundation::IAsyncAction MainWindow::RootGrid_Loading(winrt::Microsoft::UI::Xaml::FrameworkElement const& sender, winrt::Windows::Foundation::IInspectable const& args)
+    void MainWindow::RootGrid_Loading(winrt::Microsoft::UI::Xaml::FrameworkElement const& sender, winrt::Windows::Foundation::IInspectable const& args)
     {
-        auto&& drives = Common::Filesystem::DriveInfo::GetDrives();
-
-        ConnectedDrivesNumberTextBlock().Text(std::to_wstring(drives.size()));
-
-        uint64_t recycleBinTotalSize = 0;
-        for (auto&& drive : drives)
-        {
-            DriveView driveView{};
-            driveView.DriveName(drive.name());
-            driveView.Capacity(drive.capacity());
-            driveView.UsedSpace(drive.totalUsedSpace());
-            DrivesList().Children().Append(driveView);
-
-            recycleBinTotalSize += drive.getRecycleBinSize();
-        }
-
-        Common::FileSize hibernationFileSize = Common::System::GetFileSize(L"c:\\hiberfil.sys");
-        HibernationFileSize().Text(hibernationFileSize.ToString());
-        if (hibernationFileSize.Size() == 0)
-        {
-            HibernationFileSizeButton().IsEnabled(false);
-        }
-
-        Common::FileSize systemRecycleBinSize = recycleBinTotalSize;
-        SystemRecycleBinSize().Text(systemRecycleBinSize.ToString());
-        if (recycleBinTotalSize == 0)
-        {
-            SystemRecycleBinSizeButton().IsEnabled(false);
-        }
-
-        co_await winrt::resume_background();
-        auto&& libs = Common::System::GetLibraries().get();
-        auto&& downloadsFolder = libs.DownloadsFolder();
-        if (!downloadsFolder.empty())
-        {
-            Common::Filesystem::DirectoryInfo downloadsFolderInfo{ downloadsFolder };
-            auto&& downloadsFolderSize = downloadsFolderInfo.GetSize();
-            DispatcherQueue().TryEnqueue([this, downloadsSize = Common::FileSize(downloadsFolderSize)]
-            {
-                DownloadsFolderSize().Text(downloadsSize.ToString());
-            });
-        }
+        InitializeWindow();
     }
 
     void MainWindow::ScrollViewer_Loaded(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
@@ -285,6 +244,65 @@ namespace winrt::PCHealth::implementation
             list.push_back(item.as<winrt::PCHealth::WatchedFolderView>().FolderPath());
         }
         settings.saveList(L"WatchedFolders", list);
+    }
+
+    winrt::Windows::Foundation::IAsyncAction MainWindow::DrivesGrid_Loading(winrt::Microsoft::UI::Xaml::FrameworkElement const&, winrt::Windows::Foundation::IInspectable const&)
+    {
+        //TODO: Check if we need to go to background work sooner than when calculating the size of the downloads folder.
+        auto&& drives = Common::Filesystem::DriveInfo::GetDrives();
+
+        ConnectedDrivesNumberTextBlock().Text(std::to_wstring(drives.size()));
+
+        uint64_t recycleBinTotalSize = 0;
+        for (auto&& drive : drives)
+        {
+            DriveView driveView{};
+            driveView.DriveName(drive.name());
+            driveView.Capacity(drive.capacity());
+            driveView.UsedSpace(drive.totalUsedSpace());
+            DrivesList().Children().Append(driveView);
+
+            recycleBinTotalSize += drive.getRecycleBinSize();
+        }
+
+        Common::FileSize hibernationFileSize = Common::System::GetFileSize(L"c:\\hiberfil.sys");
+        HibernationFileSize().Text(hibernationFileSize.ToString());
+        if (hibernationFileSize.Size() == 0)
+        {
+            HibernationFileSizeButton().IsEnabled(false);
+        }
+
+        Common::FileSize systemRecycleBinSize = recycleBinTotalSize;
+        SystemRecycleBinSize().Text(systemRecycleBinSize.ToString());
+        if (recycleBinTotalSize == 0)
+        {
+            SystemRecycleBinSizeButton().IsEnabled(false);
+        }
+
+        co_await winrt::resume_background();
+        auto&& libs = Common::System::GetLibraries().get();
+        auto&& downloadsFolder = libs.DownloadsFolder();
+        if (!downloadsFolder.empty())
+        {
+            Common::Filesystem::DirectoryInfo downloadsFolderInfo{ downloadsFolder };
+            auto&& downloadsFolderSize = downloadsFolderInfo.GetSize();
+            DispatcherQueue().TryEnqueue([this, downloadsSize = Common::FileSize(downloadsFolderSize)]
+            {
+                DownloadsFolderSize().Text(downloadsSize.ToString());
+            });
+        }
+
+        try
+        {
+            pchealth::win32::HotKey hotKey{ L'C', MOD_CONTROL, true };
+            OutputDebug(L"Waiting for hot key to be fired...");
+            hotKey.registerHotKey();
+            OutputDebug(L"Hot key fired !");
+        }
+        catch (const std::invalid_argument& ex)
+        {
+            OutputDebug("Failed to register hotkey: " + std::string(ex.what()));
+        }
     }
 
 
@@ -449,8 +467,6 @@ namespace winrt::PCHealth::implementation
 
     void MainWindow::PostMessageToWindow(const winrt::param::hstring& longMessage, const winrt::param::hstring& shortMessage, bool recursive)
     {
-        //OutputDebugString((winrt::hstring(longMessage) + L"\n").c_str());
-
         if (!DispatcherQueue().HasThreadAccess())
         {
             if (recursive)
@@ -461,26 +477,27 @@ namespace winrt::PCHealth::implementation
             {
                 PostMessageToWindow(_longMessage, _shortMessage, true);
             });
-            return;
-        }
-
-        BottomStatusText().Text(shortMessage);
-        if (!timer.IsRunning())
-        {
-            timer.Start();
-        }
-
-        auto item = winrt::PCHealth::DatedMessageViewModel();
-        item.Message(longMessage);
-        MessagesListView().Items().Append(item);
-        if (MessagesListView().Items().Size() > 100)
-        {
-            // I18N
-            MessagesCountTextBlock().Text(L"100+");
         }
         else
         {
-            MessagesCountTextBlock().Text(winrt::to_hstring(MessagesListView().Items().Size()));
+            BottomStatusText().Text(shortMessage);
+            if (!timer.IsRunning())
+            {
+                timer.Start();
+            }
+
+            auto item = winrt::PCHealth::DatedMessageViewModel();
+            item.Message(longMessage);
+            MessagesListView().Items().Append(item);
+            if (MessagesListView().Items().Size() > 100)
+            {
+                // I18N
+                MessagesCountTextBlock().Text(L"100+");
+            }
+            else
+            {
+                MessagesCountTextBlock().Text(winrt::to_hstring(MessagesListView().Items().Size()));
+            }
         }
     }
 }

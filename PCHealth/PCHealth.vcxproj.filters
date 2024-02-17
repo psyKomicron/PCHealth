@@ -17,11 +17,20 @@
     <Page Include="WatchedFolderView.xaml">
       <Filter>Controls</Filter>
     </Page>
+    <Page Include="DrivesView.xaml">
+      <Filter>Controls</Filter>
+    </Page>
+    <Page Include="ClipboardManagerView.xaml">
+      <Filter>Controls</Filter>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Midl Include="App.idl" />
     <Midl Include="MainWindow.idl" />
     <Midl Include="DatedMessageViewModel.idl">
+      <Filter>ViewModels</Filter>
+    </Midl>
+    <Midl Include="ClipboardTrigger.idl">
       <Filter>ViewModels</Filter>
     </Midl>
   </ItemGroup>
@@ -49,9 +58,6 @@
     <ClCompile Include="UserLibraries.cpp">
       <Filter>Common\filesystem</Filter>
     </ClCompile>
-    <ClCompile Include="LocalSettings.cpp">
-      <Filter>Common\filesystem</Filter>
-    </ClCompile>
     <ClCompile Include="DirectoryWatcher.cpp">
       <Filter>Common\filesystem</Filter>
     </ClCompile>
@@ -59,6 +65,15 @@
       <Filter>Common\filesystem</Filter>
     </ClCompile>
     <ClCompile Include="utilities.cpp" />
+    <ClCompile Include="HotKey.cpp">
+      <Filter>Common\win32</Filter>
+    </ClCompile>
+    <ClCompile Include="NotificationBuilder.cpp">
+      <Filter>Common\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="LocalSettings.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -89,9 +104,6 @@
     <ClInclude Include="UserLibraries.h">
       <Filter>Common\filesystem</Filter>
     </ClInclude>
-    <ClInclude Include="LocalSettings.h">
-      <Filter>Common\filesystem</Filter>
-    </ClInclude>
     <ClInclude Include="DirectoryWatcher.h">
       <Filter>Common\filesystem</Filter>
     </ClInclude>
@@ -99,6 +111,15 @@
       <Filter>Common\filesystem</Filter>
     </ClInclude>
     <ClInclude Include="utilities.h" />
+    <ClInclude Include="HotKey.h">
+      <Filter>Common\win32</Filter>
+    </ClInclude>
+    <ClInclude Include="NotificationBuilder.h">
+      <Filter>Common\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="LocalSettings.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\Wide310x150Logo.scale-200.png">
@@ -138,6 +159,12 @@
     </Filter>
     <Filter Include="Common\filesystem">
       <UniqueIdentifier>{798a7fcd-fca6-4bf3-a384-22297b4378aa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common\win32">
+      <UniqueIdentifier>{e5bb384f-9485-46c8-9ba2-68f331c1e0bc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common\windows">
+      <UniqueIdentifier>{84990b6d-c117-4dd2-8694-f7175ff60be0}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

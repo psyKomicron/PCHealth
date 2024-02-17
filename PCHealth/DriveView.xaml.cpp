@@ -8,6 +8,7 @@
 #include "DirectoryInfo.h"
 #include "FileSize.h"
 #include "LocalSettings.h"
+#include "utilities.h"
 
 #include <ppltasks.h>
 #include <filesystem>
@@ -20,7 +21,6 @@ namespace winrt::PCHealth::implementation
 {
     DriveView::DriveView()
     {
-        InitializeComponent();
     }
 
     wrt::hstring DriveView::DriveName()
@@ -67,34 +67,34 @@ namespace winrt::PCHealth::implementation
         co_return;
     }
 
-    void DriveView::DocumentsTag_Click(winrt::PCHealth::Tag const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args)
+    void DriveView::DocumentsTag_Click(winrt::PCHealth::Tag const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const&)
     {
         static bool toggled = true;
         winrt::Microsoft::UI::Xaml::VisualStateManager::GoToState(sender, toggled ? L"TagsSublistVisible" : L"TagsSublistHidden", true);
         toggled = !toggled;
     }
 
-    void DriveView::VideosTag_Click(winrt::PCHealth::Tag const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args)
+    void DriveView::VideosTag_Click(winrt::PCHealth::Tag const&, winrt::Microsoft::UI::Xaml::RoutedEventArgs const&)
     {
     }
 
-    void DriveView::ImagesTag_Click(winrt::PCHealth::Tag const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args)
+    void DriveView::ImagesTag_Click(winrt::PCHealth::Tag const&, winrt::Microsoft::UI::Xaml::RoutedEventArgs const&)
     {
     }
 
-    void DriveView::MusicTag_Click(winrt::PCHealth::Tag const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args)
+    void DriveView::MusicTag_Click(winrt::PCHealth::Tag const&, winrt::Microsoft::UI::Xaml::RoutedEventArgs const&)
     {
     }
 
-    void DriveView::RecycleBinTag_Click(winrt::PCHealth::Tag const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args)
+    void DriveView::RecycleBinTag_Click(winrt::PCHealth::Tag const&, winrt::Microsoft::UI::Xaml::RoutedEventArgs const&)
     {
     }
 
-    void DriveView::SystemTag_Click(winrt::PCHealth::Tag const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args)
+    void DriveView::SystemTag_Click(winrt::PCHealth::Tag const&, winrt::Microsoft::UI::Xaml::RoutedEventArgs const&)
     {
     }
 
-    void DriveView::DownloadsTag_Click(winrt::PCHealth::Tag const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args)
+    void DriveView::DownloadsTag_Click(winrt::PCHealth::Tag const&, winrt::Microsoft::UI::Xaml::RoutedEventArgs const&)
     {
     }
 
@@ -255,10 +255,10 @@ namespace winrt::PCHealth::implementation
         co_await winrt::resume_background();
 
         const std::wstring videoRe = L"^\\.(mp4|mkv|flv|vob|avi|mov|qt|wmv|yuv|m4p|m4v|mpg|mp2|mpeg|mpe|mpv|mpg|m2v|m4v|svi|3gp|3g2|f4v|f4p|f4a|f4b)$";
-        const std::wstring systemRe = L"^\\.(dll|exe|msi)$";
+        const std::wstring systemRe = L"^\\.(dll|exe|msi|sys)$";
         const std::wstring pictureRe = L"^\\.(jpg|png|gif|webp|tiff|psd|raw|bmp|heif|indd|svg|ai|eps)$";
         const std::wstring documentRe = L"^\\.(pdf|docx|txt|md)$";
-        const std::wstring musicRe = L"^\\.()$";
+        const std::wstring musicRe = L"^\\.(mp3|ogg|wav|flac)$";
         std::unordered_map<std::wstring, uint64_t> extensions
         {
             { videoRe, 0 },
@@ -267,7 +267,7 @@ namespace winrt::PCHealth::implementation
             { documentRe, 0 }
         };
 
-        driveInfo.getExtensionsStats(&extensions);
+        extensions = driveInfo.getExtensionsStats(extensions);
 
         DispatcherQueue().TryEnqueue([this, videosSize = extensions[videoRe], systemFilesSize = extensions[systemRe], documentsSize = extensions[documentRe], picturesSize = extensions[pictureRe]]
         {

@@ -13,7 +13,6 @@ namespace winrt::PCHealth::implementation
 {
     WatchedFolderView::WatchedFolderView()
     {
-        InitializeComponent();
     }
 
     WatchedFolderView::WatchedFolderView(const winrt::hstring& folderPath)
@@ -23,14 +22,17 @@ namespace winrt::PCHealth::implementation
         auto&& func = [this](std::vector<pchealth::filesystem::Win32FileInformation>& e)
         {
             std::wstring pathes = L"";
+            uint64_t addedSize = 0;
             for (auto&& fileInfo : e)
             {
                 pathes += fileInfo.name() + L", ";
+                addedSize += fileInfo.size();
             }
 
+            //I18N: Translate messages.
             winrt::PCHealth::MainWindow::Current().PostMessageToWindow(
                 std::format(L"Directory watcher detected changes in '{}', {} file(s) changed : {}", watcherPtr->path(), e.size(), pathes),
-                std::format(L"'{}': {} file(s) changed.", watcherPtr->path(), e.size()),
+                std::format(L"'{}': {} file(s) changed, ~{} bytes.", watcherPtr->path(), e.size(), addedSize),
                 false
             );
         };

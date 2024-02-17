@@ -90,6 +90,9 @@
       <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">stdcpp20</LanguageStandard>
       <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">stdcpp20</LanguageStandard>
       <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdcpp20</LanguageStandard>
+      <TreatSpecificWarningsAsErrors Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">4715</TreatSpecificWarningsAsErrors>
+      <TreatSpecificWarningsAsErrors Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4715</TreatSpecificWarningsAsErrors>
+      <TreatSpecificWarningsAsErrors Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4715</TreatSpecificWarningsAsErrors>
     </ClCompile>
     <Link>
       <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">Shlwapi.lib;Shell32.lib;Advapi32.lib;Kernel32.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -107,6 +110,9 @@
       <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">stdcpp20</LanguageStandard>
       <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">stdcpp20</LanguageStandard>
       <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Release|x64'">stdcpp20</LanguageStandard>
+      <TreatSpecificWarningsAsErrors Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">4715</TreatSpecificWarningsAsErrors>
+      <TreatSpecificWarningsAsErrors Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4715</TreatSpecificWarningsAsErrors>
+      <TreatSpecificWarningsAsErrors Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4715</TreatSpecificWarningsAsErrors>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -125,6 +131,14 @@
     <Manifest Include="app.manifest" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ClipboardManagerView.xaml.h">
+      <DependentUpon>ClipboardManagerView.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
+    <ClInclude Include="ClipboardTrigger.h">
+      <DependentUpon>ClipboardTrigger.idl</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
     <ClInclude Include="DatedMessageViewModel.h">
       <DependentUpon>DatedMessageViewModel.idl</DependentUpon>
       <SubType>Code</SubType>
@@ -133,12 +147,17 @@
     <ClInclude Include="DirectorySizeCalculator.h" />
     <ClInclude Include="DirectoryWatcher.h" />
     <ClInclude Include="DriveInfo.h" />
+    <ClInclude Include="DrivesView.xaml.h">
+      <DependentUpon>DrivesView.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
     <ClInclude Include="DriveTechnology.h" />
     <ClInclude Include="DriveView.xaml.h">
       <DependentUpon>DriveView.xaml</DependentUpon>
       <SubType>Code</SubType>
     </ClInclude>
     <ClInclude Include="FileSize.h" />
+    <ClInclude Include="HotKey.h" />
     <ClInclude Include="ICancellable.h" />
     <ClInclude Include="LargeProgressBar.xaml.h">
       <DependentUpon>LargeProgressBar.xaml</DependentUpon>
@@ -146,6 +165,7 @@
     </ClInclude>
     <ClInclude Include="LibraryPathes.h" />
     <ClInclude Include="LocalSettings.h" />
+    <ClInclude Include="NotificationBuilder.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="App.xaml.h">
       <DependentUpon>App.xaml</DependentUpon>
@@ -168,6 +188,12 @@
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml" />
+    <Page Include="ClipboardManagerView.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="DrivesView.xaml">
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="DriveView.xaml">
       <SubType>Designer</SubType>
     </Page>
@@ -183,6 +209,14 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ClipboardManagerView.xaml.cpp">
+      <DependentUpon>ClipboardManagerView.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
+    <ClCompile Include="ClipboardTrigger.cpp">
+      <DependentUpon>ClipboardTrigger.idl</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
     <ClCompile Include="DatedMessageViewModel.cpp">
       <DependentUpon>DatedMessageViewModel.idl</DependentUpon>
       <SubType>Code</SubType>
@@ -191,17 +225,23 @@
     <ClCompile Include="DirectorySizeCalculator.cpp" />
     <ClCompile Include="DirectoryWatcher.cpp" />
     <ClCompile Include="DriveInfo.cpp" />
+    <ClCompile Include="DrivesView.xaml.cpp">
+      <DependentUpon>DrivesView.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
     <ClCompile Include="DriveView.xaml.cpp">
       <DependentUpon>DriveView.xaml</DependentUpon>
       <SubType>Code</SubType>
     </ClCompile>
     <ClCompile Include="FileSize.cpp" />
+    <ClCompile Include="HotKey.cpp" />
     <ClCompile Include="LargeProgressBar.xaml.cpp">
       <DependentUpon>LargeProgressBar.xaml</DependentUpon>
       <SubType>Code</SubType>
     </ClCompile>
     <ClCompile Include="LibraryPathes.cpp" />
     <ClCompile Include="LocalSettings.cpp" />
+    <ClCompile Include="NotificationBuilder.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
@@ -230,8 +270,19 @@
       <SubType>Code</SubType>
       <DependentUpon>App.xaml</DependentUpon>
     </Midl>
+    <Midl Include="ClipboardManagerView.idl">
+      <DependentUpon>ClipboardManagerView.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Midl>
+    <Midl Include="ClipboardTrigger.idl">
+      <SubType>Designer</SubType>
+    </Midl>
     <Midl Include="DatedMessageViewModel.idl">
       <SubType>Designer</SubType>
+    </Midl>
+    <Midl Include="DrivesView.idl">
+      <DependentUpon>DrivesView.xaml</DependentUpon>
+      <SubType>Code</SubType>
     </Midl>
     <Midl Include="DriveView.idl">
       <DependentUpon>DriveView.xaml</DependentUpon>

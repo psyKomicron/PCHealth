@@ -3,12 +3,14 @@
 
 #include "System.h"
 #include "DirectorySizeCalculator.h"
+#include "utilities.h"
 
 #include <Windows.h>
 #include <shlwapi.h>
 #include <ppl.h>
 #include <filesystem>
 #include <regex>
+#include <chrono>
 
 namespace Common::Filesystem
 {
@@ -65,7 +67,7 @@ namespace Common::Filesystem
         return drivesList;
     }
 
-    int64_t DriveInfo::capacity()
+    int64_t DriveInfo::capacity() const
     {
         return _capacity;
     }
@@ -75,56 +77,56 @@ namespace Common::Filesystem
         return _totalUsedSpace;
     }
 
-    std::wstring_view DriveInfo::name()
+    std::wstring_view DriveInfo::name() const
     {
         return driveName;
     }
 
-    DriveTechnology DriveInfo::technology()
+    DriveTechnology DriveInfo::technology() const
     {
         return DriveTechnology();
     }
 
-    bool DriveInfo::isMainDrive()
+    bool DriveInfo::isMainDrive() const
     {
         return driveName == L"C:\\";
     }
 
-    uint64_t DriveInfo::getRecycleBinSize()
+    uint64_t DriveInfo::getRecycleBinSize() const
     {
         SHQUERYRBINFO queryBinInfo{ sizeof(SHQUERYRBINFO) };
         SHQueryRecycleBin(driveName.c_str(), &queryBinInfo);
         return queryBinInfo.i64Size;
     }
 
-    LibraryPathes DriveInfo::getLibraries()
+    LibraryPathes DriveInfo::getLibraries() const
     {
         return {};
     }
 
-    void DriveInfo::getExtensionsStats(std::unordered_map<std::wstring, uint64_t>* extensionsRegices)
+    std::unordered_map<std::wstring, uint64_t> DriveInfo::getExtensionsStats(std::unordered_map<std::wstring, uint64_t> extensionsRegices)
     {
+        auto clock = std::chrono::high_resolution_clock::now();
+
         std::timed_mutex timedMutex{};
-        getDirStats(extensionsRegices, driveName, &timedMutex, extensionsRegices->empty());
+        getDirStats(extensionsRegices, driveName, &timedMutex, extensionsRegices.empty());
+
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - clock);
+        OutputDebug(std::format(L"'{}' Extensions stats : elapsed {}ms.", driveName, duration.count()));
+
+        return extensionsRegices;
     }
 
-    void DriveInfo::getDirStats(std::unordered_map<std::wstring, uint64_t>* extensions, const std::wstring& path, std::timed_mutex* timedMutex, const bool& listAll)
+    void DriveInfo::getDirStats(std::unordered_map<std::wstring, uint64_t>& extensions, const std::wstring& path, std::timed_mutex* timedMutex, const bool& listAll)
     {
-        if (path.starts_with(L"\\")) // Prevents infinite looping when the directory name is invalid (often buffer too small)
-        {
-            return;
-        }
-
         WIN32_FIND_DATA findData{};
         HANDLE findHandle = nullptr;
-        if (!path.ends_with(L"\\"))
+        std::wstring searchPath = path;
+        if (searchPath[searchPath.size() - 1] != L'\\')
         {
-            findHandle = FindFirstFile((path + L"\\*").c_str(), &findData);
+            searchPath.append(1, L'\\');
         }
-        else
-        {
-            findHandle = FindFirstFile((path + L"*").c_str(), &findData);
-        }
+        findHandle = FindFirstFile((searchPath + L"*").c_str(), &findData);
 
         if (findHandle != INVALID_HANDLE_VALUE)
         {
@@ -133,27 +135,24 @@ namespace Common::Filesystem
             {
                 if (!(findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
                 {
-                    uint64_t fileSize = (static_cast<int64_t>(findData.nFileSizeHigh) << 32) | findData.nFileSizeLow;
+                    uint64_t fileSize = pchealth::utilities::convert(findData.nFileSizeHigh, findData.nFileSizeLow);
                     std::filesystem::path filePath{ findData.cFileName };
                     if (filePath.has_extension())
                     {
+                        std::wstring extension = filePath.extension();
+                        
                         using namespace std::chrono_literals;
                         std::unique_lock<std::timed_mutex> lock{ *timedMutex, std::defer_lock };
-
-                        std::wstring extension = filePath.extension();
-                        if (lock.try_lock_for(1s))
+                        if (lock.try_lock_for(333ms))
                         {
-                            for (const auto& pair : *extensions)
+                            for (const auto& pair : extensions)
                             {
                                 std::wregex re{ pair.first, std::regex_constants::icase };
                                 if (std::regex_search(extension, re))
                                 {
-                                    extensions->operator[](pair.first) = pair.second + fileSize;
+                                    extensions[pair.first] = pair.second + fileSize;
                                     break;
                                 }
-#ifdef ENABLE_DEBUG_OUTPUT
-                                else OutputDebugString(std::format(L"/{}/ search failed in '{}'\n", pair.first, extension).c_str());
-#endif
                             }
                         }
 #ifdef ENABLE_DEBUG_OUTPUT
@@ -161,7 +160,7 @@ namespace Common::Filesystem
                         {
                             std::filesystem::path root{ path };
                             root /= filePath;
-                            OutputDebugString(std::format(L"Failed to take mutex (1 sec) for '{}'.\n", root.generic_wstring()).c_str());
+                            OutputDebug(std::format(L"Failed to take mutex (333 ms) for '{}'.", root.wstring()));
                         }
 #endif
                     }
@@ -177,28 +176,12 @@ namespace Common::Filesystem
             } while (FindNextFile(findHandle, &findData));
             FindClose(findHandle);
 
-            std::atomic_uint_fast64_t atomicDirSize{};
-            if (pathes.size() > 1)
+            concurrency::parallel_for_each(begin(pathes), end(pathes), [this, wstr = path, timedMutex, &extensions, listAll](const std::wstring& dir)
             {
-                concurrency::parallel_for_each(begin(pathes), end(pathes), [this, wstr = path, timedMutex, extensions, listAll](const std::wstring& dir)
-                {
-                    WCHAR combinedPath[2048]{};
-                    PathCombine(combinedPath, wstr.c_str(), dir.c_str());
-                    std::wstring deepPath = std::wstring(combinedPath) + L"\\";
-                    getDirStats(extensions, deepPath, timedMutex, listAll);
-                    //TODO: Add the computed sizes to the main map.
-                });
-            }
-            else
-            {
-                size_t max = pathes.size();
-                for (size_t i = 0; i < max; i++)
-                {
-                    WCHAR combinedPath[2048];
-                    PathCombine(combinedPath, path.c_str(), pathes[i].c_str());
-                    getDirStats(extensions, std::wstring(combinedPath) + L"\\", timedMutex, listAll);
-                }
-            }
+                std::filesystem::path combinedPath{ wstr };
+                combinedPath /= dir;
+                getDirStats(extensions, combinedPath, timedMutex, listAll);
+            });
         }
     }
 }

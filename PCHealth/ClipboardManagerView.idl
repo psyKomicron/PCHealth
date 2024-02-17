@@ -1,0 +1,12 @@
+import "ClipboardTrigger.idl";
+
+namespace PCHealth
+{
+    [default_interface]
+    runtimeclass ClipboardManagerView : Microsoft.UI.Xaml.Controls.UserControl
+    {
+        ClipboardManagerView();
+
+        IVector<ClipboardTrigger> Formats{ get; };
+    }
+}
