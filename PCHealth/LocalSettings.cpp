@@ -71,7 +71,7 @@ namespace pchealth::storage
             composite.Insert(pair.first, winrt::box_value(pair.second));
         }
 
-        localSettings.Values().Insert(;
+        //localSettings.Values().Insert(;
     }
 
 
