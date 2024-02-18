@@ -19,13 +19,13 @@ namespace winrt::PCHealth::implementation
 {
     ClipboardManagerView::ClipboardManagerView()
     {
-        winrt::PCHealth::ClipboardTrigger trigger{};
+        /*winrt::PCHealth::ClipboardTrigger trigger{};
         trigger.Name(L"secure website");
         trigger.Query(L"https://www.youtube.com/watch?v={}");
         trigger.Match(L"[A-z0-9_-]{11}");
         trigger.Action(winrt::PCHealth::ClipboardTriggerAction::OpenWebBrowser);
         trigger.ShowNotification(true);
-        _formats.Append(trigger);
+        _formats.Append(trigger);*/
 
         appNotifManager.NotificationInvoked({ this, &ClipboardManagerView::NotificationManager_NotificationInvoked });
         appNotifManager.Register();
@@ -40,6 +40,30 @@ namespace winrt::PCHealth::implementation
     winrt::Windows::Foundation::Collections::IVector<winrt::PCHealth::ClipboardTrigger> ClipboardManagerView::Formats()
     {
         return _formats;
+    }
+
+    winrt::Windows::Foundation::IAsyncAction ClipboardManagerView::UserControl_Loading(winrt::Microsoft::UI::Xaml::FrameworkElement const&, winrt::Windows::Foundation::IInspectable const&)
+    {
+        co_await winrt::resume_background();
+
+        if (winrt::Windows::Storage::ApplicationData::Current().LocalSettings().Containers().HasKey(L"ClipboardTriggers"))
+        {
+            auto&& clipboardTriggers = pchealth::storage::LocalSettings(winrt::Windows::Storage::ApplicationData::Current().LocalSettings());
+            auto&& objectList = clipboardTriggers.restoreObjectList(L"ClipboardTriggers");
+
+            for (auto&& object : objectList)
+            {
+                auto&& members = object.second;
+                PCHealth::ClipboardTrigger trigger{};
+                trigger.Name(object.first);
+                trigger.Match(members[L"Match"].as<winrt::hstring>());
+                trigger.Query(members[L"Query"].as<winrt::hstring>());
+                trigger.Action(static_cast<winrt::PCHealth::ClipboardTriggerAction>(members[L"Action"].as<int32_t>()));
+                trigger.ShowNotification(members[L"ShowNotification"].as<bool>());
+
+                _formats.Append(trigger);
+            }
+        }
     }
 
     winrt::Windows::Foundation::IAsyncAction ClipboardManagerView::ClipboardListeningToggleSwitch_Toggled(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
@@ -107,7 +131,16 @@ namespace winrt::PCHealth::implementation
     {
         auto&& settings = pchealth::storage::LocalSettings(winrt::Windows::Storage::ApplicationData::Current().LocalSettings());
         auto&& clipboardTriggers = pchealth::storage::LocalSettings(settings.openOrCreate(L"ClipboardTriggers"));
-        clipboardTriggers.
+        for (auto&& trigger : _formats)
+        {
+            std::map<winrt::hstring, winrt::Windows::Foundation::IInspectable> map{};
+            map.insert(std::make_pair(L"Match", winrt::box_value(trigger.Match())));
+            map.insert(std::make_pair(L"Query", winrt::box_value(trigger.Query())));
+            map.insert(std::make_pair(L"Action", winrt::box_value(static_cast<int32_t>(trigger.Action()))));
+            map.insert(std::make_pair(L"ShowNotification", winrt::box_value(trigger.ShowNotification())));
+
+            clipboardTriggers.saveObject(trigger.Name(), map);
+        }
     }
 
 

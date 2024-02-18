@@ -194,7 +194,7 @@ namespace winrt::PCHealth::implementation
     {
         co_await winrt::resume_background();
 
-        auto settings = PcHealth::Filesystem::LocalSettings(winrt::Windows::Storage::ApplicationData::Current().LocalSettings());
+        auto settings = pchealth::storage::LocalSettings(winrt::Windows::Storage::ApplicationData::Current().LocalSettings());
         auto pathes = settings.restoreList(L"WatchedFolders");
         PostMessageToWindow(
             std::format(L"Restored {} folders.", pathes.size()), 
@@ -236,7 +236,7 @@ namespace winrt::PCHealth::implementation
 
     void winrt::PCHealth::implementation::MainWindow::AppBarSaveButton_Click(winrt::Windows::Foundation::IInspectable const&, winrt::Microsoft::UI::Xaml::RoutedEventArgs const&)
     {
-        auto settings = PcHealth::Filesystem::LocalSettings(winrt::Windows::Storage::ApplicationData::Current().LocalSettings());        
+        auto settings = pchealth::storage::LocalSettings(winrt::Windows::Storage::ApplicationData::Current().LocalSettings());
         auto items = WatchedFoldersListView().Items();
         std::vector<winrt::hstring> list{};
         for (auto item : items)

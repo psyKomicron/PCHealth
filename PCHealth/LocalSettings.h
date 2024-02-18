@@ -12,7 +12,8 @@ namespace pchealth::storage
         winrt::Windows::Storage::ApplicationDataContainer openOrCreate(const winrt::hstring& key);
         void saveList(const winrt::hstring& key, const std::vector<winrt::hstring> list);
         std::vector<winrt::hstring> restoreList(const winrt::hstring& key);
-        void saveObject(const winrt::hstring& key, const std::map<winrt::hstring, winrt::hstring>& objectAsMap);
+        void saveObject(const winrt::hstring& key, const std::map<winrt::hstring, winrt::Windows::Foundation::IInspectable>& objectAsMap);
+        std::map<winrt::hstring, std::map<winrt::hstring, winrt::Windows::Foundation::IInspectable>> restoreObjectList(const winrt::hstring& key);
 
         template <typename T>
         std::optional<T> tryLookup(const winrt::hstring& key)

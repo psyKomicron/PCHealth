@@ -63,15 +63,33 @@ namespace pchealth::storage
         return list;
     }
 
-    void LocalSettings::saveObject(const winrt::hstring& key, const std::map<winrt::hstring, winrt::hstring>& objectAsMap)
+    void LocalSettings::saveObject(const winrt::hstring& key, const std::map<winrt::hstring, winrt::Windows::Foundation::IInspectable>& objectAsMap)
     {
-        winrt::Windows::Storage::ApplicationDataCompositeValue composite{};
+        auto&& container = openOrCreate(key);
         for (auto&& pair : objectAsMap)
         {
-            composite.Insert(pair.first, winrt::box_value(pair.second));
+            container.Values().Insert(pair.first, pair.second);
+        }
+    }
+
+    std::map<winrt::hstring, std::map<winrt::hstring, winrt::Windows::Foundation::IInspectable>> LocalSettings::restoreObjectList(const winrt::hstring& key)
+    {
+        std::map<winrt::hstring, std::map<winrt::hstring, winrt::Windows::Foundation::IInspectable>> objectList{};
+        auto&& containers = localSettings.Containers().Lookup(key);
+        for (auto&& container : containers.Containers())
+        {
+            winrt::hstring objectKey = container.Key();
+
+            std::map<winrt::hstring, winrt::Windows::Foundation::IInspectable> membersMap{};
+            for (auto&& value : container.Value().Values())
+            {
+                membersMap.insert(std::make_pair(value.Key(), value.Value()));
+            }
+
+            objectList.insert(std::make_pair(objectKey, membersMap));
         }
 
-        //localSettings.Values().Insert(;
+        return objectList;
     }
 
 

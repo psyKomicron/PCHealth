@@ -21,6 +21,7 @@ namespace winrt::PCHealth::implementation
         void AppBarRemoveButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);
         void AppBarEditButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);
         void AppBarSaveButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);
+        winrt::Windows::Foundation::IAsyncAction UserControl_Loading(winrt::Microsoft::UI::Xaml::FrameworkElement const& sender, winrt::Windows::Foundation::IInspectable const& args);
 
     private:
         bool loadClipboardHistory = false;
@@ -28,7 +29,7 @@ namespace winrt::PCHealth::implementation
         winrt::event_token clipboardChangedToken{};
         winrt::Windows::Foundation::Collections::IVector<winrt::PCHealth::ClipboardTrigger> _formats
         { 
-            winrt::single_threaded_observable_vector<winrt::PCHealth::ClipboardTrigger>() 
+            winrt::multi_threaded_observable_vector<winrt::PCHealth::ClipboardTrigger>() 
         };
         winrt::Microsoft::Windows::AppNotifications::AppNotificationManager appNotifManager = winrt::Microsoft::Windows::AppNotifications::AppNotificationManager::Default();
 

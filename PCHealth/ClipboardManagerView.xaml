@@ -6,7 +6,8 @@
     xmlns:local="using:PCHealth"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    mc:Ignorable="d">
+    mc:Ignorable="d"
+    Loading="UserControl_Loading">
 
     <StackPanel>
         <Expander>
@@ -90,15 +91,22 @@
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
-                                <RowDefinition/>
-                                <RowDefinition/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
                             <FontIcon Glyph="&#xe76f;" VerticalAlignment="Center" Grid.RowSpan="3"/>
 
-                            <TextBlock Style="{StaticResource SubheaderTextBlockStyle}" FontSize="28" Text="{x:Bind Name}" Grid.Column="1"/>
-                            <TextBlock Text="{x:Bind Query}" VerticalAlignment="Center" Margin="0,15,0,5" Grid.Row="1" Grid.Column="1" FontFamily="Consolas"/>
-                            <TextBlock Text="{x:Bind ActionText}" VerticalAlignment="Bottom" Grid.Row="2" Grid.Column="1"/>
+                            <TextBlock Text="{x:Bind Name}" Grid.Column="1" FontSize="20"/>
+                            <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="5">
+                                <StackPanel.Resources>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Opacity" Value="0.7" />
+                                    </Style>
+                                </StackPanel.Resources>
+                                <TextBlock Text="{x:Bind Query}" FontSize="14" VerticalAlignment="Center" FontFamily="Consolas"/>
+                                <TextBlock Text=" | "/>
+                                <TextBlock Text="{x:Bind ActionText}" FontSize="14" VerticalAlignment="Bottom"/>
+                            </StackPanel>
 
                             <ToggleSwitch Grid.Column="2" Grid.RowSpan="3" HorizontalAlignment="Right"/>
                             <StackPanel Grid.Column="3" Orientation="Horizontal" Grid.RowSpan="3">
