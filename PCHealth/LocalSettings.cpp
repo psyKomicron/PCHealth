@@ -1,13 +1,15 @@
 #include "pch.h"
 #include "LocalSettings.h"
 
+#include "utilities.h"
+
 #include <string>
 
 namespace pchealth::storage
 {
     const bool SHOW_ALL_CONTAINERS = true;
 
-    winrt::Windows::Storage::ApplicationDataContainer LocalSettings::openOrCreate(const winrt::hstring& key)
+    winrt::Windows::Storage::ApplicationDataContainer LocalSettings::openOrCreate(const winrt::hstring& key) const
     {
         if (localSettings.Containers().HasKey(key))
         {
@@ -19,7 +21,7 @@ namespace pchealth::storage
         }
     }
 
-    void LocalSettings::saveList(const winrt::hstring& key, const std::vector<winrt::hstring> list)
+    void LocalSettings::saveList(const winrt::hstring& key, const std::vector<winrt::hstring> list) const
     {
         winrt::Windows::Storage::ApplicationDataContainer container{ nullptr };
         if (localSettings.Containers().HasKey(key))
@@ -39,7 +41,7 @@ namespace pchealth::storage
         }
     }
 
-    std::vector<winrt::hstring> LocalSettings::restoreList(const winrt::hstring& key)
+    std::vector<winrt::hstring> LocalSettings::restoreList(const winrt::hstring& key) const
     {
         std::vector<winrt::hstring> list{};
 
@@ -54,16 +56,17 @@ namespace pchealth::storage
         }
         else if constexpr (SHOW_ALL_CONTAINERS)
         {
+            OutputDebug(L"Showing all containers...");
             for (auto&& container : localSettings.Containers())
             {
-                OutputDebugString(container.Key().c_str());
+                OutputDebug(std::wstring(container.Key()));
             }
         }
 
         return list;
     }
 
-    void LocalSettings::saveObject(const winrt::hstring& key, const std::map<winrt::hstring, winrt::Windows::Foundation::IInspectable>& objectAsMap)
+    void LocalSettings::saveObject(const winrt::hstring& key, const std::map<winrt::hstring, winrt::Windows::Foundation::IInspectable>& objectAsMap) const
     {
         auto&& container = openOrCreate(key);
         for (auto&& pair : objectAsMap)
@@ -72,7 +75,7 @@ namespace pchealth::storage
         }
     }
 
-    std::map<winrt::hstring, std::map<winrt::hstring, winrt::Windows::Foundation::IInspectable>> LocalSettings::restoreObjectList(const winrt::hstring& key)
+    std::map<winrt::hstring, std::map<winrt::hstring, winrt::Windows::Foundation::IInspectable>> LocalSettings::restoreObjectList(const winrt::hstring& key) const
     {
         std::map<winrt::hstring, std::map<winrt::hstring, winrt::Windows::Foundation::IInspectable>> objectList{};
         auto&& containers = localSettings.Containers().Lookup(key);
@@ -92,8 +95,13 @@ namespace pchealth::storage
         return objectList;
     }
 
+    void LocalSettings::openOrCreateAndMoveTo(const winrt::hstring& key)
+    {
+        localSettings = openOrCreate(key);
+    }
 
-    winrt::Windows::Storage::ApplicationDataContainer LocalSettings::createContainer(const winrt::hstring& key)
+
+    winrt::Windows::Storage::ApplicationDataContainer LocalSettings::createContainer(const winrt::hstring& key) const
     {
         return localSettings.CreateContainer(key, winrt::Windows::Storage::ApplicationDataCreateDisposition::Always);
     }

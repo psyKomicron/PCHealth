@@ -4,11 +4,11 @@
 #include "ClipboardManagerView.g.cpp"
 #endif
 
-#include "NotificationBuilder.h"
 #include "utilities.h"
 #include "LocalSettings.h"
 
 #include <winrt/Windows.ApplicationModel.DataTransfer.h>
+#include <winrt/Microsoft.Windows.AppNotifications.Builder.h>
 
 #include <regex>
 
@@ -159,7 +159,6 @@ namespace winrt::PCHealth::implementation
     {
         if (trigger.ShowNotification())
         {
-            pchealth::windows::NotificationBuilder notificationBuilder{};
             winrt::hstring buttonText = L"";
             switch (trigger.Action())
             {

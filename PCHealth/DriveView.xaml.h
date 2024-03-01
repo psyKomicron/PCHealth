@@ -51,7 +51,7 @@ namespace winrt::PCHealth::implementation
         winrt::hstring driveName{};
         double usedSpace{};
         double capacity{};
-        Common::Filesystem::DriveInfo driveInfo{};
+        pchealth::filesystem::DriveInfo driveInfo{};
         winrt::Windows::Foundation::IAsyncAction action;
 
         inline void TagClicked();

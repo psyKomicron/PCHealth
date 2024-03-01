@@ -4,9 +4,8 @@
 
 #include <string>
 #include <mutex>
-#include <concurrent_unordered_map.h>
 
-namespace Common::Filesystem
+namespace pchealth::filesystem
 {
     class DriveInfo
     {
@@ -14,7 +13,7 @@ namespace Common::Filesystem
         DriveInfo() = default;
         DriveInfo(const std::wstring& driveName);
 
-        static std::vector<Common::Filesystem::DriveInfo> GetDrives();
+        static std::vector<DriveInfo> GetDrives();
 
         int64_t capacity() const;
         int64_t totalUsedSpace() const;

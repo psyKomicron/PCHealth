@@ -74,7 +74,18 @@
   <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Label="UserMacros">
+    <GenerateAppInstallerFile>False</GenerateAppInstallerFile>
+    <AppxPackageSigningEnabled>False</AppxPackageSigningEnabled>
+    <PackageCertificateThumbprint>8E0C06A4EEB3431BAC66CE3E0ADC926E5B252C6F</PackageCertificateThumbprint>
+    <AppxPackageSigningTimestampDigestAlgorithm>SHA512</AppxPackageSigningTimestampDigestAlgorithm>
+    <AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>
+    <AppxSymbolPackageEnabled>False</AppxSymbolPackageEnabled>
+    <GenerateTestArtifacts>True</GenerateTestArtifacts>
+    <AppxBundle>Always</AppxBundle>
+    <AppxBundlePlatforms>x86|x64</AppxBundlePlatforms>
+    <HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
+  </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -143,6 +154,7 @@
       <DependentUpon>DatedMessageViewModel.idl</DependentUpon>
       <SubType>Code</SubType>
     </ClInclude>
+    <ClInclude Include="Directory.h" />
     <ClInclude Include="DirectoryInfo.h" />
     <ClInclude Include="DirectorySizeCalculator.h" />
     <ClInclude Include="DirectoryWatcher.h" />
@@ -156,6 +168,10 @@
       <DependentUpon>DriveView.xaml</DependentUpon>
       <SubType>Code</SubType>
     </ClInclude>
+    <ClInclude Include="FileInfoViewModel.h">
+      <DependentUpon>FileInfoViewModel.idl</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
     <ClInclude Include="FileSize.h" />
     <ClInclude Include="HotKey.h" />
     <ClInclude Include="ICancellable.h" />
@@ -165,7 +181,6 @@
     </ClInclude>
     <ClInclude Include="LibraryPathes.h" />
     <ClInclude Include="LocalSettings.h" />
-    <ClInclude Include="NotificationBuilder.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="App.xaml.h">
       <DependentUpon>App.xaml</DependentUpon>
@@ -173,7 +188,14 @@
     <ClInclude Include="MainWindow.xaml.h">
       <DependentUpon>MainWindow.xaml</DependentUpon>
     </ClInclude>
+    <ClInclude Include="Searcher.h" />
+    <ClInclude Include="SearchResult.h" />
+    <ClInclude Include="SearchResultKind.h" />
     <ClInclude Include="System.h" />
+    <ClInclude Include="SystemSearchViewer.xaml.h">
+      <DependentUpon>SystemSearchViewer.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
     <ClInclude Include="Tag.xaml.h">
       <DependentUpon>Tag.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -201,6 +223,9 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="MainWindow.xaml" />
+    <Page Include="SystemSearchViewer.xaml">
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="Tag.xaml">
       <SubType>Designer</SubType>
     </Page>
@@ -221,6 +246,7 @@
       <DependentUpon>DatedMessageViewModel.idl</DependentUpon>
       <SubType>Code</SubType>
     </ClCompile>
+    <ClCompile Include="Directory.cpp" />
     <ClCompile Include="DirectoryInfo.cpp" />
     <ClCompile Include="DirectorySizeCalculator.cpp" />
     <ClCompile Include="DirectoryWatcher.cpp" />
@@ -233,6 +259,10 @@
       <DependentUpon>DriveView.xaml</DependentUpon>
       <SubType>Code</SubType>
     </ClCompile>
+    <ClCompile Include="FileInfoViewModel.cpp">
+      <DependentUpon>FileInfoViewModel.idl</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
     <ClCompile Include="FileSize.cpp" />
     <ClCompile Include="HotKey.cpp" />
     <ClCompile Include="LargeProgressBar.xaml.cpp">
@@ -241,7 +271,6 @@
     </ClCompile>
     <ClCompile Include="LibraryPathes.cpp" />
     <ClCompile Include="LocalSettings.cpp" />
-    <ClCompile Include="NotificationBuilder.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
@@ -252,7 +281,13 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
     </ClCompile>
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
+    <ClCompile Include="Searcher.cpp" />
+    <ClCompile Include="SearchResult.cpp" />
     <ClCompile Include="System.cpp" />
+    <ClCompile Include="SystemSearchViewer.xaml.cpp">
+      <DependentUpon>SystemSearchViewer.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
     <ClCompile Include="Tag.xaml.cpp">
       <DependentUpon>Tag.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -288,6 +323,9 @@
       <DependentUpon>DriveView.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Midl>
+    <Midl Include="FileInfoViewModel.idl">
+      <SubType>Designer</SubType>
+    </Midl>
     <Midl Include="LargeProgressBar.idl">
       <DependentUpon>LargeProgressBar.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -295,6 +333,10 @@
     <Midl Include="MainWindow.idl">
       <SubType>Code</SubType>
       <DependentUpon>MainWindow.xaml</DependentUpon>
+    </Midl>
+    <Midl Include="SystemSearchViewer.idl">
+      <DependentUpon>SystemSearchViewer.xaml</DependentUpon>
+      <SubType>Code</SubType>
     </Midl>
     <Midl Include="Tag.idl">
       <DependentUpon>Tag.xaml</DependentUpon>
@@ -329,6 +371,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="PCHealth_TemporaryKey.pfx" />
   </ItemGroup>
   <!--
     Defining the "HasPackageAndPublishMenuAddedByProject" property here allows the Solution

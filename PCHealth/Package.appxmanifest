@@ -11,14 +11,14 @@
 
   <Identity
     Name="c07b4644-0e2a-4a36-8f06-54e1424c9237"
-    Publisher="CN=MonsieurJ"
-    Version="1.0.0.0" />
+    Publisher="CN=Julien Marquet"
+    Version="1.0.2.0" />
 
   <mp:PhoneIdentity PhoneProductId="c07b4644-0e2a-4a36-8f06-54e1424c9237" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
     <DisplayName>PCHealth</DisplayName>
-    <PublisherDisplayName>MonsieurJ</PublisherDisplayName>
+    <PublisherDisplayName>Julien Marquet</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 

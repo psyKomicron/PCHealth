@@ -23,6 +23,9 @@
     <Page Include="ClipboardManagerView.xaml">
       <Filter>Controls</Filter>
     </Page>
+    <Page Include="SystemSearchViewer.xaml">
+      <Filter>Controls</Filter>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Midl Include="App.idl" />
@@ -33,92 +36,110 @@
     <Midl Include="ClipboardTrigger.idl">
       <Filter>ViewModels</Filter>
     </Midl>
+    <Midl Include="FileInfoViewModel.idl">
+      <Filter>ViewModels</Filter>
+    </Midl>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
     <ClCompile Include="System.cpp">
-      <Filter>Common</Filter>
+      <Filter>lib</Filter>
     </ClCompile>
     <ClCompile Include="DriveInfo.cpp">
-      <Filter>Common\filesystem</Filter>
+      <Filter>lib\filesystem</Filter>
     </ClCompile>
     <ClCompile Include="LibraryPathes.cpp">
-      <Filter>Common\filesystem</Filter>
+      <Filter>lib\filesystem</Filter>
     </ClCompile>
     <ClCompile Include="DirectoryInfo.cpp">
-      <Filter>Common\filesystem</Filter>
+      <Filter>lib\filesystem</Filter>
     </ClCompile>
     <ClCompile Include="DirectorySizeCalculator.cpp">
-      <Filter>Common\filesystem</Filter>
+      <Filter>lib\filesystem</Filter>
     </ClCompile>
     <ClCompile Include="FileSize.cpp">
-      <Filter>Common</Filter>
+      <Filter>lib</Filter>
     </ClCompile>
     <ClCompile Include="UserLibraries.cpp">
-      <Filter>Common\filesystem</Filter>
+      <Filter>lib\filesystem</Filter>
     </ClCompile>
     <ClCompile Include="DirectoryWatcher.cpp">
-      <Filter>Common\filesystem</Filter>
+      <Filter>lib\filesystem</Filter>
     </ClCompile>
     <ClCompile Include="Win32FileInformation.cpp">
-      <Filter>Common\filesystem</Filter>
+      <Filter>lib\filesystem</Filter>
     </ClCompile>
     <ClCompile Include="utilities.cpp" />
     <ClCompile Include="HotKey.cpp">
-      <Filter>Common\win32</Filter>
-    </ClCompile>
-    <ClCompile Include="NotificationBuilder.cpp">
-      <Filter>Common\windows</Filter>
+      <Filter>lib\win32</Filter>
     </ClCompile>
     <ClCompile Include="LocalSettings.cpp">
-      <Filter>Common</Filter>
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="Directory.cpp">
+      <Filter>lib\filesystem</Filter>
+    </ClCompile>
+    <ClCompile Include="Searcher.cpp">
+      <Filter>lib\windows\search</Filter>
+    </ClCompile>
+    <ClCompile Include="SearchResult.cpp">
+      <Filter>lib\windows\search</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
     <ClInclude Include="System.h">
-      <Filter>Common</Filter>
+      <Filter>lib</Filter>
     </ClInclude>
     <ClInclude Include="ICancellable.h">
-      <Filter>Common</Filter>
+      <Filter>lib</Filter>
     </ClInclude>
     <ClInclude Include="DriveInfo.h">
-      <Filter>Common\filesystem</Filter>
+      <Filter>lib\filesystem</Filter>
     </ClInclude>
     <ClInclude Include="DriveTechnology.h">
-      <Filter>Common\filesystem</Filter>
+      <Filter>lib\filesystem</Filter>
     </ClInclude>
     <ClInclude Include="LibraryPathes.h">
-      <Filter>Common\filesystem</Filter>
+      <Filter>lib\filesystem</Filter>
     </ClInclude>
     <ClInclude Include="DirectoryInfo.h">
-      <Filter>Common\filesystem</Filter>
+      <Filter>lib\filesystem</Filter>
     </ClInclude>
     <ClInclude Include="DirectorySizeCalculator.h">
-      <Filter>Common\filesystem</Filter>
+      <Filter>lib\filesystem</Filter>
     </ClInclude>
     <ClInclude Include="FileSize.h">
-      <Filter>Common</Filter>
+      <Filter>lib</Filter>
     </ClInclude>
     <ClInclude Include="UserLibraries.h">
-      <Filter>Common\filesystem</Filter>
+      <Filter>lib\filesystem</Filter>
     </ClInclude>
     <ClInclude Include="DirectoryWatcher.h">
-      <Filter>Common\filesystem</Filter>
+      <Filter>lib\filesystem</Filter>
     </ClInclude>
     <ClInclude Include="Win32FileInformation.h">
-      <Filter>Common\filesystem</Filter>
+      <Filter>lib\filesystem</Filter>
     </ClInclude>
     <ClInclude Include="utilities.h" />
     <ClInclude Include="HotKey.h">
-      <Filter>Common\win32</Filter>
-    </ClInclude>
-    <ClInclude Include="NotificationBuilder.h">
-      <Filter>Common\windows</Filter>
+      <Filter>lib\win32</Filter>
     </ClInclude>
     <ClInclude Include="LocalSettings.h">
-      <Filter>Common</Filter>
+      <Filter>lib</Filter>
+    </ClInclude>
+    <ClInclude Include="Directory.h">
+      <Filter>lib\filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="Searcher.h">
+      <Filter>lib\windows\search</Filter>
+    </ClInclude>
+    <ClInclude Include="SearchResult.h">
+      <Filter>lib\windows\search</Filter>
+    </ClInclude>
+    <ClInclude Include="SearchResultKind.h">
+      <Filter>lib\windows\search</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -148,23 +169,26 @@
     <Filter Include="Assets">
       <UniqueIdentifier>{ed3e1aa7-36b6-4841-816c-05f907221ed6}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Common">
-      <UniqueIdentifier>{c136d187-31ab-48d2-b817-56dd92d9ad5d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Controls">
       <UniqueIdentifier>{e0fc23b5-757f-4e9b-80b7-d7ca2e01ef35}</UniqueIdentifier>
     </Filter>
     <Filter Include="ViewModels">
       <UniqueIdentifier>{fef8c1af-90e3-4796-b789-4559f08fb34c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Common\filesystem">
+    <Filter Include="lib">
+      <UniqueIdentifier>{c136d187-31ab-48d2-b817-56dd92d9ad5d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib\filesystem">
       <UniqueIdentifier>{798a7fcd-fca6-4bf3-a384-22297b4378aa}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Common\win32">
+    <Filter Include="lib\win32">
       <UniqueIdentifier>{e5bb384f-9485-46c8-9ba2-68f331c1e0bc}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Common\windows">
+    <Filter Include="lib\windows">
       <UniqueIdentifier>{84990b6d-c117-4dd2-8694-f7175ff60be0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib\windows\search">
+      <UniqueIdentifier>{1393789e-7a58-4d61-95b7-b8789831bb3a}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -178,6 +202,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="PCHealth_TemporaryKey.pfx" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="$(MSBuildThisFileDirectory)..\..\natvis\wil.natvis" />

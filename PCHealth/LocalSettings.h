@@ -9,11 +9,12 @@ namespace pchealth::storage
             localSettings = container;
         };
 
-        winrt::Windows::Storage::ApplicationDataContainer openOrCreate(const winrt::hstring& key);
-        void saveList(const winrt::hstring& key, const std::vector<winrt::hstring> list);
-        std::vector<winrt::hstring> restoreList(const winrt::hstring& key);
-        void saveObject(const winrt::hstring& key, const std::map<winrt::hstring, winrt::Windows::Foundation::IInspectable>& objectAsMap);
-        std::map<winrt::hstring, std::map<winrt::hstring, winrt::Windows::Foundation::IInspectable>> restoreObjectList(const winrt::hstring& key);
+        winrt::Windows::Storage::ApplicationDataContainer openOrCreate(const winrt::hstring& key) const;
+        void saveList(const winrt::hstring& key, const std::vector<winrt::hstring> list) const;
+        std::vector<winrt::hstring> restoreList(const winrt::hstring& key) const;
+        void saveObject(const winrt::hstring& key, const std::map<winrt::hstring, winrt::Windows::Foundation::IInspectable>& objectAsMap) const;
+        std::map<winrt::hstring, std::map<winrt::hstring, winrt::Windows::Foundation::IInspectable>> restoreObjectList(const winrt::hstring& key) const;
+        void openOrCreateAndMoveTo(const winrt::hstring& key);
 
         template <typename T>
         std::optional<T> tryLookup(const winrt::hstring& key)
@@ -42,10 +43,16 @@ namespace pchealth::storage
             }
         }
 
+        template <typename T>
+        void insert(const winrt::hstring& key, const T& value)
+        {
+            localSettings.Values().Insert(key, winrt::box_value(value));
+        }
+
     private:
         winrt::Windows::Storage::ApplicationDataContainer localSettings{ nullptr };
 
-        winrt::Windows::Storage::ApplicationDataContainer createContainer(const winrt::hstring& key);
+        winrt::Windows::Storage::ApplicationDataContainer createContainer(const winrt::hstring& key) const;
     };
 }
 

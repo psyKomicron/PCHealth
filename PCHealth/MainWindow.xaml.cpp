@@ -9,14 +9,14 @@
 #include "FileSize.h"
 #include "LibraryPathes.h"
 #include "LocalSettings.h"
-#include "HotKey.h"
 #include "utilities.h"
+
+#include "DatedMessageViewModel.h"
 
 #include <shellapi.h>
 #include <ppl.h>
 #include <algorithm>
 
-#include "DatedMessageViewModel.h"
 #include <DispatcherQueue.h>
 #include <microsoft.ui.xaml.window.h>
 #include <winrt/Microsoft.UI.Windowing.h>
@@ -79,6 +79,42 @@ namespace winrt::PCHealth::implementation
     {
         systemGeneralHealth = value;
         e_propertyChanged(*this, Microsoft::UI::Xaml::Data::PropertyChangedEventArgs(L"SystemGeneralHealth"));
+    }
+
+    void MainWindow::PostMessageToWindow(const winrt::param::hstring& longMessage, const winrt::param::hstring& shortMessage, bool recursive)
+    {
+        if (!DispatcherQueue().HasThreadAccess())
+        {
+            if (recursive)
+            {
+                throw winrt::hresult_out_of_bounds(L"Preventing recursive stack overflow.");
+            }
+            DispatcherQueue().TryEnqueue([this, _longMessage = winrt::hstring(longMessage), _shortMessage = winrt::hstring(shortMessage)]
+            {
+                PostMessageToWindow(_longMessage, _shortMessage, true);
+            });
+        }
+        else
+        {
+            BottomStatusText().Text(shortMessage);
+            if (!timer.IsRunning())
+            {
+                timer.Start();
+            }
+
+            auto item = winrt::PCHealth::DatedMessageViewModel();
+            item.Message(longMessage);
+            MessagesListView().Items().Append(item);
+            if (MessagesListView().Items().Size() > 100)
+            {
+                // I18N
+                MessagesCountTextBlock().Text(L"100+");
+            }
+            else
+            {
+                MessagesCountTextBlock().Text(winrt::to_hstring(MessagesListView().Items().Size()));
+            }
+        }
     }
 
     void MainWindow::RootGrid_Loading(winrt::Microsoft::UI::Xaml::FrameworkElement const& sender, winrt::Windows::Foundation::IInspectable const& args)
@@ -249,7 +285,7 @@ namespace winrt::PCHealth::implementation
     winrt::Windows::Foundation::IAsyncAction MainWindow::DrivesGrid_Loading(winrt::Microsoft::UI::Xaml::FrameworkElement const&, winrt::Windows::Foundation::IInspectable const&)
     {
         //TODO: Check if we need to go to background work sooner than when calculating the size of the downloads folder.
-        auto&& drives = Common::Filesystem::DriveInfo::GetDrives();
+        auto&& drives = pchealth::filesystem::DriveInfo::GetDrives();
 
         ConnectedDrivesNumberTextBlock().Text(std::to_wstring(drives.size()));
 
@@ -290,18 +326,6 @@ namespace winrt::PCHealth::implementation
             {
                 DownloadsFolderSize().Text(downloadsSize.ToString());
             });
-        }
-
-        try
-        {
-            pchealth::win32::HotKey hotKey{ L'C', MOD_CONTROL, true };
-            OutputDebug(L"Waiting for hot key to be fired...");
-            hotKey.registerHotKey();
-            OutputDebug(L"Hot key fired !");
-        }
-        catch (const std::invalid_argument& ex)
-        {
-            OutputDebug("Failed to register hotkey: " + std::string(ex.what()));
         }
     }
 
@@ -440,7 +464,8 @@ namespace winrt::PCHealth::implementation
     void MainWindow::AppWindow_Closing(winrt::Microsoft::UI::Windowing::AppWindow, winrt::Microsoft::UI::Windowing::AppWindowClosingEventArgs)
     {
         AppBarSaveButton_Click(nullptr, nullptr);
-            
+        SaveWindow();
+
         backdropController.Close();
         dispatcherQueueController.ShutdownQueueAsync();
     }
@@ -465,39 +490,25 @@ namespace winrt::PCHealth::implementation
         }
     }
 
-    void MainWindow::PostMessageToWindow(const winrt::param::hstring& longMessage, const winrt::param::hstring& shortMessage, bool recursive)
+    void MainWindow::SaveWindow()
     {
-        if (!DispatcherQueue().HasThreadAccess())
-        {
-            if (recursive)
-            {
-                throw winrt::hresult_out_of_bounds(L"Preventing recursive stack overflow.");
-            }
-            DispatcherQueue().TryEnqueue([this, _longMessage = winrt::hstring(longMessage), _shortMessage = winrt::hstring(shortMessage)]
-            {
-                PostMessageToWindow(_longMessage, _shortMessage, true);
-            });
-        }
-        else
-        {
-            BottomStatusText().Text(shortMessage);
-            if (!timer.IsRunning())
-            {
-                timer.Start();
-            }
+        pchealth::storage::LocalSettings settings{ winrt::Windows::Storage::ApplicationData::Current().LocalSettings() };
+        settings.openOrCreateAndMoveTo(L"MainWindow");
+        settings.insert(L"Height", appWindow.Size().Height);
+        settings.insert(L"Width", appWindow.Size().Width);
+        settings.insert(L"PosX", appWindow.Position().X);
+        settings.insert(L"PosY", appWindow.Position().Y);
+        settings.insert(L"PivotLastIndex", WindowPivot().SelectedIndex());
+    }
 
-            auto item = winrt::PCHealth::DatedMessageViewModel();
-            item.Message(longMessage);
-            MessagesListView().Items().Append(item);
-            if (MessagesListView().Items().Size() > 100)
-            {
-                // I18N
-                MessagesCountTextBlock().Text(L"100+");
-            }
-            else
-            {
-                MessagesCountTextBlock().Text(winrt::to_hstring(MessagesListView().Items().Size()));
-            }
-        }
+    void MainWindow::RestoreWindow()
+    {
+        pchealth::storage::LocalSettings settings{ winrt::Windows::Storage::ApplicationData::Current().LocalSettings() };
+        settings.openOrCreateAndMoveTo(L"MainWindow");
+        /*settings.tryLookup<int32_t>(L"Height");
+        settings.tryLookup<int32_t>(L"Width");
+        settings.tryLookup<int32_t>(L"PosX");
+        settings.tryLookup<int32_t>(L"PosY");*/
+        WindowPivot().SelectedIndex(settings.tryLookup<int32_t>(L"PivotLastIndex").value_or(0));
     }
 }

@@ -58,6 +58,8 @@ namespace winrt::PCHealth::implementation
         void SetDragRectangles();
         void AppWindow_Closing(winrt::Microsoft::UI::Windowing::AppWindow, winrt::Microsoft::UI::Windowing::AppWindowClosingEventArgs);
         void AddWatchedFolder(const winrt::hstring& path);
+        void SaveWindow();
+        void RestoreWindow();
     };
 }
 

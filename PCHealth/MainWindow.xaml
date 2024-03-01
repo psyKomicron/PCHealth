@@ -22,7 +22,11 @@
             </Grid.ColumnDefinitions>
         </Grid>
 
-        <Pivot Grid.Row="1" SelectedIndex="2">
+        <Pivot x:Name="WindowPivot" Grid.Row="1">
+            <PivotItem Header="Search">
+                <local:SystemSearchViewer/>
+            </PivotItem>
+
             <PivotItem Header="Drives">
                 <Grid>
                     <ScrollViewer>

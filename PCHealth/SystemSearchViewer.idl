@@ -1,0 +1,8 @@
+namespace PCHealth
+{
+    [default_interface]
+    runtimeclass SystemSearchViewer : Microsoft.UI.Xaml.Controls.UserControl
+    {
+        SystemSearchViewer();
+    }
+}

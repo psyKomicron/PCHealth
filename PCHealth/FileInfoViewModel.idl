@@ -1,0 +1,17 @@
+namespace PCHealth
+{
+    [bindable]
+    [default_interface]
+    runtimeclass FileInfoViewModel 
+    {
+        FileInfoViewModel();
+        
+        String Name;
+        String Path;
+        String Type;
+        Boolean IsDirectory;
+        Boolean IsApplication;
+        Boolean IsFileSystemEntry{ get; };
+        Microsoft.UI.Xaml.Media.Imaging.BitmapImage Thumbnail;
+    }
+}

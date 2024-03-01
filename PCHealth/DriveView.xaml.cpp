@@ -56,7 +56,7 @@ namespace winrt::PCHealth::implementation
 
     void DriveView::RootGrid_Loading(winrt::Microsoft::UI::Xaml::FrameworkElement const&, winrt::Windows::Foundation::IInspectable const&)
     {
-        driveInfo = Common::Filesystem::DriveInfo(std::wstring(driveName.c_str()));
+        driveInfo = pchealth::filesystem::DriveInfo(std::wstring(driveName.c_str()));
         FreeDiskSpaceTextBlock().Text(Common::FileSize(driveInfo.totalUsedSpace()).ToString());
     }
 

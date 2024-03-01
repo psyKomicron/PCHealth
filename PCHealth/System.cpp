@@ -14,7 +14,7 @@ namespace Common
         return 0;
     }
 
-    concurrency::task<Filesystem::LibraryPathes> System::GetLibraries()
+    concurrency::task<pchealth::filesystem::LibraryPathes> System::GetLibraries()
     {
         return concurrency::create_task([]
         {
@@ -31,7 +31,7 @@ namespace Common
             auto&& videosFolders = GetLibraryFolders(&user, winrt::Windows::Storage::KnownFolderId::VideosLibrary).get();
             auto&& appAllModsFolders = GetLibraryFolders(&user, winrt::Windows::Storage::KnownFolderId::AllAppMods).get();*/
 
-            return Filesystem::LibraryPathes(
+            return pchealth::filesystem::LibraryPathes(
                 std::wstring(downloadsFolder.Path()),
                 documentsFolders,
                 musicFolders,

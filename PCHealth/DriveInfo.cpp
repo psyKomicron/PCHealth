@@ -12,7 +12,7 @@
 #include <regex>
 #include <chrono>
 
-namespace Common::Filesystem
+namespace pchealth::filesystem
 {
     DriveInfo::DriveInfo(const std::wstring& driveName)
     {
@@ -37,11 +37,11 @@ namespace Common::Filesystem
         }
     }
 
-    std::vector<Common::Filesystem::DriveInfo> DriveInfo::GetDrives()
+    std::vector<DriveInfo> DriveInfo::GetDrives()
     {
         WCHAR drives[512]{};
         WCHAR* pointer = drives;
-        std::vector<Common::Filesystem::DriveInfo> drivesList{};
+        std::vector<DriveInfo> drivesList{};
 
         if (GetLogicalDriveStrings(512, drives))
         {
@@ -54,7 +54,7 @@ namespace Common::Filesystem
                     break;
                 }
 
-                drivesList.push_back(Common::Filesystem::DriveInfo(std::wstring(pointer)));
+                drivesList.push_back(DriveInfo(std::wstring(pointer)));
 
                 while (*pointer++);
             }
