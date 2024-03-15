@@ -17,7 +17,7 @@ namespace pchealth::filesystem
 
         int64_t capacity() const;
         int64_t totalUsedSpace() const;
-        std::wstring_view name() const;
+        std::wstring name() const;
         DriveTechnology technology() const;
         bool isMainDrive() const;
 

@@ -1,51 +1,58 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ApplicationDefinition Include="App.xaml" />
-  </ItemGroup>
-  <ItemGroup>
-    <Page Include="MainWindow.xaml" />
     <Page Include="DriveView.xaml">
-      <Filter>Controls</Filter>
+      <Filter>winui\Controls</Filter>
     </Page>
     <Page Include="LargeProgressBar.xaml">
-      <Filter>Controls</Filter>
+      <Filter>winui\Controls</Filter>
     </Page>
     <Page Include="Tag.xaml">
-      <Filter>Controls</Filter>
+      <Filter>winui\Controls</Filter>
     </Page>
     <Page Include="WatchedFolderView.xaml">
-      <Filter>Controls</Filter>
+      <Filter>winui\Controls</Filter>
     </Page>
     <Page Include="DrivesView.xaml">
-      <Filter>Controls</Filter>
+      <Filter>winui\Controls</Filter>
     </Page>
     <Page Include="ClipboardManagerView.xaml">
-      <Filter>Controls</Filter>
+      <Filter>winui\Controls</Filter>
     </Page>
     <Page Include="SystemSearchViewer.xaml">
-      <Filter>Controls</Filter>
+      <Filter>winui\Controls</Filter>
+    </Page>
+    <Page Include="WatchedFoldersPage.xaml">
+      <Filter>winui\Pages</Filter>
+    </Page>
+    <Page Include="HomePage.xaml">
+      <Filter>winui\Pages</Filter>
+    </Page>
+    <Page Include="DrivesPage.xaml">
+      <Filter>winui\Pages</Filter>
+    </Page>
+    <Page Include="MainWindow.xaml">
+      <Filter>winui</Filter>
+    </Page>
+    <Page Include="DisplayView.xaml">
+      <Filter>winui\Controls</Filter>
     </Page>
   </ItemGroup>
   <ItemGroup>
     <Midl Include="App.idl" />
     <Midl Include="MainWindow.idl" />
     <Midl Include="DatedMessageViewModel.idl">
-      <Filter>ViewModels</Filter>
+      <Filter>winui\ViewModels</Filter>
     </Midl>
     <Midl Include="ClipboardTrigger.idl">
-      <Filter>ViewModels</Filter>
+      <Filter>winui\ViewModels</Filter>
     </Midl>
     <Midl Include="FileInfoViewModel.idl">
-      <Filter>ViewModels</Filter>
+      <Filter>winui\ViewModels</Filter>
     </Midl>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
-    <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
-    <ClCompile Include="System.cpp">
-      <Filter>lib</Filter>
-    </ClCompile>
     <ClCompile Include="DriveInfo.cpp">
       <Filter>lib\filesystem</Filter>
     </ClCompile>
@@ -70,7 +77,6 @@
     <ClCompile Include="Win32FileInformation.cpp">
       <Filter>lib\filesystem</Filter>
     </ClCompile>
-    <ClCompile Include="utilities.cpp" />
     <ClCompile Include="HotKey.cpp">
       <Filter>lib\win32</Filter>
     </ClCompile>
@@ -86,12 +92,21 @@
     <ClCompile Include="SearchResult.cpp">
       <Filter>lib\windows\search</Filter>
     </ClCompile>
+    <ClCompile Include="System.cpp">
+      <Filter>lib\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="$(GeneratedFilesDir)module.g.cpp">
+      <Filter>winui</Filter>
+    </ClCompile>
+    <ClCompile Include="utilities.cpp">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="DisplayMonitor.cpp">
+      <Filter>lib\windows</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
-    <ClInclude Include="System.h">
-      <Filter>lib</Filter>
-    </ClInclude>
     <ClInclude Include="ICancellable.h">
       <Filter>lib</Filter>
     </ClInclude>
@@ -122,7 +137,6 @@
     <ClInclude Include="Win32FileInformation.h">
       <Filter>lib\filesystem</Filter>
     </ClInclude>
-    <ClInclude Include="utilities.h" />
     <ClInclude Include="HotKey.h">
       <Filter>lib\win32</Filter>
     </ClInclude>
@@ -141,40 +155,40 @@
     <ClInclude Include="SearchResultKind.h">
       <Filter>lib\windows\search</Filter>
     </ClInclude>
+    <ClInclude Include="System.h">
+      <Filter>lib\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="utilities.h">
+      <Filter>lib</Filter>
+    </ClInclude>
+    <ClInclude Include="DisplayMonitor.h">
+      <Filter>lib\windows</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\Wide310x150Logo.scale-200.png">
-      <Filter>Assets</Filter>
+      <Filter>winui\Assets</Filter>
     </Image>
     <Image Include="Assets\StoreLogo.png">
-      <Filter>Assets</Filter>
+      <Filter>winui\Assets</Filter>
     </Image>
     <Image Include="Assets\Square150x150Logo.scale-200.png">
-      <Filter>Assets</Filter>
+      <Filter>winui\Assets</Filter>
     </Image>
     <Image Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png">
-      <Filter>Assets</Filter>
+      <Filter>winui\Assets</Filter>
     </Image>
     <Image Include="Assets\Square44x44Logo.scale-200.png">
-      <Filter>Assets</Filter>
+      <Filter>winui\Assets</Filter>
     </Image>
     <Image Include="Assets\SplashScreen.scale-200.png">
-      <Filter>Assets</Filter>
+      <Filter>winui\Assets</Filter>
     </Image>
     <Image Include="Assets\LockScreenLogo.scale-200.png">
-      <Filter>Assets</Filter>
+      <Filter>winui\Assets</Filter>
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="Assets">
-      <UniqueIdentifier>{ed3e1aa7-36b6-4841-816c-05f907221ed6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Controls">
-      <UniqueIdentifier>{e0fc23b5-757f-4e9b-80b7-d7ca2e01ef35}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ViewModels">
-      <UniqueIdentifier>{fef8c1af-90e3-4796-b789-4559f08fb34c}</UniqueIdentifier>
-    </Filter>
     <Filter Include="lib">
       <UniqueIdentifier>{c136d187-31ab-48d2-b817-56dd92d9ad5d}</UniqueIdentifier>
     </Filter>
@@ -190,21 +204,49 @@
     <Filter Include="lib\windows\search">
       <UniqueIdentifier>{1393789e-7a58-4d61-95b7-b8789831bb3a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="winui">
+      <UniqueIdentifier>{e6686a06-da31-4596-8fc6-456652498596}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="winui\ViewModels">
+      <UniqueIdentifier>{fef8c1af-90e3-4796-b789-4559f08fb34c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="winui\Pages">
+      <UniqueIdentifier>{d7324a0e-7f1f-4e69-9ef4-cb59a8f2edda}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="winui\Controls">
+      <UniqueIdentifier>{e0fc23b5-757f-4e9b-80b7-d7ca2e01ef35}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="winui\Assets">
+      <UniqueIdentifier>{ed3e1aa7-36b6-4841-816c-05f907221ed6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="CHANGELOG.md" />
   </ItemGroup>
   <ItemGroup>
-    <Manifest Include="app.manifest" />
-  </ItemGroup>
-  <ItemGroup>
-    <AppxManifest Include="Package.appxmanifest" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
-    <None Include="PCHealth_TemporaryKey.pfx" />
+    <None Include="packages.config">
+      <Filter>winui</Filter>
+    </None>
+    <None Include="PCHealth_TemporaryKey.pfx">
+      <Filter>winui</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="$(MSBuildThisFileDirectory)..\..\natvis\wil.natvis" />
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="app.manifest">
+      <Filter>winui</Filter>
+    </Manifest>
+  </ItemGroup>
+  <ItemGroup>
+    <ApplicationDefinition Include="App.xaml">
+      <Filter>winui</Filter>
+    </ApplicationDefinition>
+  </ItemGroup>
+  <ItemGroup>
+    <AppxManifest Include="Package.appxmanifest">
+      <Filter>winui</Filter>
+    </AppxManifest>
   </ItemGroup>
 </Project>

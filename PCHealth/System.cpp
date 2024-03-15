@@ -1,13 +1,19 @@
 #include "pch.h"
 #include "System.h"
 
+#include "utilities.h"
+
 #include <winrt/Windows.System.h>
 #include <winrt/Windows.Storage.h>
 
 #include <pplawait.h>
 #include <shlwapi.h>
+#include <processthreadsapi.h>
+#include <windows.h>
 
-namespace Common
+#include <iostream>
+
+namespace pchealth::windows
 {
     int System::GetGeneralHealth()
     {
@@ -41,41 +47,6 @@ namespace Common
         });
     }
 
-    //TODO: Use wstring_view.
-    std::vector<Filesystem::DirectoryInfo> System::EnumerateDirectories(const std::wstring& path)
-    {
-        auto dirs = std::vector<Filesystem::DirectoryInfo>();
-
-        WIN32_FIND_DATA findData{};
-        HANDLE findHandle = nullptr;
-        if (!path.ends_with(L"\\"))
-        {
-            findHandle = FindFirstFile((path + L"\\*").c_str(), &findData);
-        }
-        else
-        {
-            findHandle = FindFirstFile((path + L"*").c_str(), &findData);
-        }
-
-        if (findHandle != INVALID_HANDLE_VALUE)
-        {
-            do
-            {
-                if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-                {
-                    std::wstring filePath = std::wstring(findData.cFileName);
-                    if (filePath != L"." && filePath != L"..")
-                    {
-                        dirs.push_back(filePath);
-                    }
-                }
-            } while (FindNextFile(findHandle, &findData));
-            FindClose(findHandle);
-        }
-
-        return dirs;
-    }
-
     std::wstring System::GetCurrentUserName()
     {
         DWORD bufferSize{};
@@ -103,9 +74,26 @@ namespace Common
         return fileSize;
     }
 
-    bool System::PathExists(const std::wstring& path)
+    bool System::pathExists(const std::wstring& path)
     {
         return PathFileExists(path.c_str());
+    }
+
+    bool System::openExplorer(std::wstring args)
+    {
+        STARTUPINFOW info{ sizeof(STARTUPINFOW) };
+        PROCESS_INFORMATION processInfo{};
+        std::wstring command = std::format(L"explorer /select,\"{}\"", args);
+        if (CreateProcessW(nullptr, command.data(), nullptr, nullptr, false, DETACHED_PROCESS, nullptr, nullptr, &info, &processInfo))
+        {
+            CloseHandle(processInfo.hProcess);
+            CloseHandle(processInfo.hThread);
+            return true;
+        }
+        else
+        {
+            winrt::throw_last_error();
+        }
     }
 
     concurrency::task<std::vector<std::wstring>> System::GetLibraryFolders(winrt::Windows::System::User* user, const winrt::Windows::Storage::KnownFolderId& id)
@@ -121,7 +109,7 @@ namespace Common
                 //documentsFolder.Path()
                 foldersList.push_back(std::wstring(folder.Path()));
             }
-            return std::move(foldersList);
+            return foldersList;
         });
     }
 }

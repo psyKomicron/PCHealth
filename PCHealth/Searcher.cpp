@@ -12,13 +12,15 @@
 #include <windows.h>
 #include <cwctype>
 #include <cwchar>
+#include <cmath>
+
+#define SHOW_OUTPUT
 
 namespace pchealth::windows::search
 {
-    Searcher::Searcher(const std::chrono::milliseconds& notificationDelay, const bool& includeRecycleBin, const CallbackType& callback)
+    Searcher::Searcher(const bool& includeRecycleBin, const CallbackType& callback)
     {
         this->callback = callback;
-        this->notificationDelay = notificationDelay;
         this->_includeRecycleBin = includeRecycleBin;
     }
 
@@ -42,53 +44,82 @@ namespace pchealth::windows::search
         return pathQueueCount.load();
     }
 
-    std::vector<SearchResult> Searcher::search(const std::wstring& query)
+    std::vector<SearchResult> Searcher::search(const std::wstring& _query, const std::vector<pchealth::filesystem::DriveInfo>& _drives)
     {
-        std::vector<pchealth::filesystem::DriveInfo> drives = pchealth::filesystem::DriveInfo::GetDrives();
+        prepareSearch();
 
-        searchRunning.store(true);
-        pathQueueCount = 0;
-        concurrency::parallel_for_each(std::begin(drives), std::end(drives), [this, query](auto drive)
+        
+        std::wstring query = LR"(\b)" + _query;
+        size_t offset = 0;
+        while ((offset = query.find(L" ", offset)) != std::string::npos)
         {
-            auto files = fillQueue(std::wstring(drive.name()), query, fillQueueMaxDepth);
-            callback(files, true);
-        });
-
-        auto task = concurrency::create_task([this, query]()
+            query = query.replace(offset, 1, LR"(\b)");
+        }
+        if (offset == std::string::npos)
         {
-            const std::wregex re = std::wregex(query, std::regex_constants::icase);
+            query += LR"(\b)";
+        }
 
-            auto&& inventory = winrt::Windows::System::Inventory::InstalledDesktopApp::GetInventoryAsync().get();
-            std::vector<SearchResult> results{};
-            for (auto&& app : inventory)
+        std::vector<pchealth::filesystem::DriveInfo> drives{};
+        if (_drives.empty())
+        {
+            drives = pchealth::filesystem::DriveInfo::GetDrives();
+        }
+        else
+        {
+            drives = _drives;
+        }
+        
+        auto fillQueueTask = concurrency::create_task([this, query, drives]()
+        {
+            concurrency::parallel_for_each(std::begin(drives), std::end(drives), [this, query](auto drive)
             {
-                auto&& displayName = std::wstring(app.DisplayName());
-                if (std::regex_search(displayName, re))
+#ifdef SHOW_OUTPUT
+                OutputDebug(L"Building queue for " + drive.name() + L"...");
+#endif
+                auto files = fillQueue(drive.name(), query, fillQueueMaxDepth);
+                if (pathQueueCount.load() > 500 && !queueReady.test())
                 {
-                    results.push_back(SearchResult(displayName, SearchResultKind::Application));
+                    notifyQueueReady();
                 }
+                callback(files, true);
+            });
+
+            queueFillingEnded.store(true);
+            if (!queueReady.test())
+            {
+                notifyQueueReady();
             }
-            callback(results, true);
         });
 
-        for (size_t i = 0; i < (drives.size() * 2); i++)
-        {
-            searchThreads.push_back(std::thread(&Searcher::__runSearch, this, query, i));
-        }
+        auto applicationsTask = searchApplications(query);
+        waitForThreads(drives.size(), query);
 
-        for (size_t i = 0; i < searchThreads.size(); i++)
-        {
-            searchThreads[i].join();
-            OutputDebug(std::format(L"Thread n.{} finished.", i));
-        }
+#ifdef SHOW_OUTPUT
+        OutputDebug(L"Waiting for tasks...");
+#endif
+        fillQueueTask.get();
+        applicationsTask.get();
 
         searchRunning.store(false);
-        OutputDebug(L"Searcher finished searching.");
-        searchThreads.clear();
+        queueReady.clear();
 
+#ifdef SHOW_OUTPUT
+        OutputDebug(L"Search finished !");
+#endif
         // TODO: Return aggregated search results.
         return {};
     }
+
+    void Searcher::cancelCurrentSearch()
+    {
+        if (searchRunning.load())
+        {
+            searchCancelled.store(true);
+            searchRunning.wait(false);
+        }
+    }
+
 
     std::vector<SearchResult> Searcher::fillQueue(const std::wstring& root, const std::wstring& query, const int32_t& maxDepth, int32_t depth)
     {
@@ -127,7 +158,7 @@ namespace pchealth::windows::search
             {
                 if (std::regex_search(entry.first.filename().wstring(), re))
                 {
-                    files.push_back(SearchResult(entry.first.filename().wstring(), SearchResultKind::File));
+                    files.push_back(SearchResult(entry.first.wstring(), SearchResultKind::File));
                 }
             }
         }
@@ -143,16 +174,25 @@ namespace pchealth::windows::search
         return path;
     }
 
+    void Searcher::getBackoff(uint32_t & backoff)
+    {
+        double d = static_cast<double>(backoff);
+        d = std::floor(d * std::log10(d));
+        if (d < 2000)
+        {
+            backoff = static_cast<uint32_t>(d);
+        }
+    }
+
     void Searcher::search(const std::filesystem::path& path, const std::wregex& queryRe, std::vector<SearchResult>& results, const uint32_t& threadId)
     {
         pchealth::filesystem::Directory dir{ path };
         auto entries = dir.enumerate();
-
         std::vector<SearchResult> toNotify{};
-
         // improve update using a view on the vector.
         for (size_t i = 0; i < entries.size(); i++)
         {
+            checkIfSearchCancelled();
             auto&& filePath = entries[i].first;
             if (std::regex_search(filePath.filename().wstring(), queryRe))
             {
@@ -169,6 +209,7 @@ namespace pchealth::windows::search
 
         for (size_t i = 0; i < entries.size(); i++)
         {
+            checkIfSearchCancelled();
             if (entries[i].second)
             {
                 search(entries[i].first, queryRe, results, threadId);
@@ -176,40 +217,145 @@ namespace pchealth::windows::search
         }
     }
 
+    concurrency::task<void> Searcher::searchApplications(const std::wstring& query)
+    {
+        return concurrency::create_task([this, query]()
+        {
+            try
+            {
+#ifdef SHOW_OUTPUT
+                OutputDebug(L"Searching for apps matching the query...");
+#endif
+                const std::wregex re = std::wregex(query);
+                auto&& inventory = winrt::Windows::System::Inventory::InstalledDesktopApp::GetInventoryAsync().get();
+                std::vector<SearchResult> results{};
+                for (auto&& app : inventory)
+                {
+                    auto&& displayName = std::wstring(app.DisplayName());
+                    if (std::regex_search(displayName, re))
+                    {
+                        results.push_back(SearchResult(displayName, SearchResultKind::Application));
+                    }
+                }
+                callback(results, true);
+            }
+            catch (std::system_error err)
+            {
+                __debugbreak();
+            }
+        });
+    }
+
+    void Searcher::checkIfSearchCancelled() const
+    {
+        if (isSearchCancelled())
+        {
+            throw std::exception("Search cancelled");
+        }
+    }
+
+    bool Searcher::isSearchCancelled() const
+    {
+        return searchCancelled.load();
+    }
+
+    void Searcher::prepareSearch()
+    {
+        if (searchRunning.load())
+        {
+            // Cancel search ?
+            throw std::out_of_range("Cancel search before starting a new one.");
+        }
+
+        searchCancelled.store(false);
+        searchRunning.store(true);
+        pathQueueCount.store(0);
+
+        if (!pathQueue.empty() && _rebuildQueue)
+        {
+            while (!pathQueue.empty())
+            {
+                //pathQueue.front();
+                pathQueue.pop();
+            }
+        }
+
+        if (queueReady.test())
+        {
+            queueReady.clear();
+        }
+    }
+
+    void Searcher::waitForThreads(const size_t& drivesCount, const std::wstring& query)
+    {
+        std::vector<std::thread> threads{ drivesCount * 2 };
+
+        for (uint32_t i = 0; i < (drivesCount * 2); i++)
+        {
+            threads[i] = std::thread(&Searcher::__runSearch, this, query, i);
+        }
+
+        for (size_t i = 0; i < threads.size(); i++)
+        {
+            threads[i].join();
+        }
+    }
+
+    inline void Searcher::notifyQueueReady()
+    {
+        queueReady.test_and_set();
+        queueReady.notify_one();
+    }
+
     void Searcher::__runSearch(std::wstring query, uint32_t id)
     {
-        std::vector<std::pair<std::filesystem::path, bool>> pathes{};
-        uint_fast64_t bound = 0;
+        queueReady.wait(true);
 
+#ifdef SHOW_OUTPUT
+        OutputDebug(std::format(L"Thread {} queue ready. Search starting.", id));
+#endif // SHOW_OUTPUT
+
+        uint_fast64_t bound = 0;
+        uint32_t backoff = 33;
         try
         {
-            while ((++bound) < 500000)
+            while ((++bound) < 500000 && !isSearchCancelled())
             {
-                auto clock = std::chrono::high_resolution_clock::now();
-
                 std::unique_lock<std::timed_mutex> lock{ queueMutex, std::defer_lock };
                 if (lock.try_lock_for(std::chrono::milliseconds(333)))
                 {
+                    if (isSearchCancelled()) return;
+
                     if (pathQueue.empty())
                     {
-                        return;
-                    }
-                    std::wstring path = consumePath();
-                    lock.unlock();
+                        lock.unlock();
 
-                    std::vector<SearchResult> results{};
-                    search(std::filesystem::path(path), std::wregex(query, std::regex_constants::icase | std::regex_constants::basic), results, id);
-                    callback({}, false);
-                    //if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - clock) < notificationDelay)
-                    //{
-                    //    // notify user about the new results;
-                    //    callback(finds, true);
-                    //}
-                    //else
-                    //{
-                    //    // add results to a collection.
-                    //    pathes.insert(pathes.end(), finds.begin(), finds.end());
-                    //}
+                        if (queueFillingEnded.load())
+                        {
+#ifdef SHOW_OUTPUT
+                            OutputDebug(std::format(L"Thread {}: Pathes queue is empty.", id));
+#endif // SHOW_OUTPUT
+                            return;
+                        }
+
+                        getBackoff(backoff);
+#ifdef SHOW_OUTPUT
+                        OutputDebug(std::format(L"{}>> Sleeping for {}ms.", id, backoff));
+#endif // SHOW_OUTPUT
+                        Sleep((backoff / 2));
+                        if (isSearchCancelled()) return;
+                        Sleep((backoff / 2));
+                    }
+                    else
+                    {
+                        backoff = 33;
+                        std::wstring path = consumePath();
+                        lock.unlock();
+
+                        std::vector<SearchResult> results{};
+                        search(std::filesystem::path(path), std::wregex(query, std::regex_constants::icase | std::regex_constants::basic), results, id);
+                        callback({}, false);
+                    }
                 }
                 else
                 {
@@ -221,12 +367,21 @@ namespace pchealth::windows::search
         {
             OutputDebug(std::format("{}>> Invalid argument: {}", std::to_string(id), invalidArgument.what()));
         }
+        catch (std::regex_error reError)
+        {
+            __debugbreak();
+        }
+        catch (...)
+        {
+            __debugbreak();
+        }
 
 #ifdef _DEBUG
         if (bound == 500000) __debugbreak();
 #endif // _DEBUG
 
-        //callback(pathes, true);
-        OutputDebug(std::format(L"Thread {} exited.", id));
+#ifdef SHOW_OUTPUT
+        OutputDebug(std::format(L"Thread {}: Exited.", id));
+#endif // SHOW_OUTPUT
     }
 }

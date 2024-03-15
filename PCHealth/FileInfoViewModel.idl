@@ -13,5 +13,6 @@ namespace PCHealth
         Boolean IsApplication;
         Boolean IsFileSystemEntry{ get; };
         Microsoft.UI.Xaml.Media.Imaging.BitmapImage Thumbnail;
+        Int32 Kind;
     }
 }

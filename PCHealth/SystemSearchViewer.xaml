@@ -15,9 +15,37 @@
                 <VisualState x:Name="NormalSearch"/>
                 <VisualState x:Name="FilterSearch">
                     <VisualState.Setters>
-                        <Setter Target="FilterAutoSuggestBox.Visibility" Value="Visible"/>
+                        <Setter Target="FilterBoxGrid.Visibility" Value="Visible"/>
                         <Setter Target="OpenFilterBoxButtonIcon.Glyph" Value="&#xe70e;"/>
                     </VisualState.Setters>
+                    
+                    <Storyboard>
+                        <DoubleAnimation
+                            Duration="0:0:0.083"
+                            From="0"
+                            To="1"
+                            Storyboard.TargetProperty="Opacity"
+                            Storyboard.TargetName="FilterBoxGrid"/>
+                    </Storyboard>
+                </VisualState>
+            </VisualStateGroup>
+            
+            <VisualStateGroup>
+                <VisualState x:Name="OptionsClose"/>
+                <VisualState x:Name="OptionsOpen">
+                    <VisualState.Setters>
+                        <Setter Target="DropdownStackPanel.Visibility" Value="Visible"/>
+                        <!--<Setter Target="DropdownStackPanel.Opacity" Value="1"/>-->
+                    </VisualState.Setters>
+
+                    <Storyboard>
+                        <DoubleAnimation
+                            Duration="0:0:0.083"
+                            From="0"
+                            To="1"
+                            Storyboard.TargetProperty="Opacity"
+                            Storyboard.TargetName="DropdownStackPanel"/>
+                    </Storyboard>
                 </VisualState>
             </VisualStateGroup>
 
@@ -29,6 +57,11 @@
                         <Setter Target="LoadingProgressRing.IsIndeterminate" Value="True"/>
                         <Setter Target="LoadingProgressRing.Visibility" Value="Visible"/>
                         <Setter Target="RemainingTextBlock.Visibility" Value="Visible"/>
+                        <Setter Target="SearchTextBlock.Visibility" Value="Collapsed"/>
+                        <Setter Target="SearchTextBlock.Text" Value=""/>
+                        <Setter Target="SearchFileCountTextBlock.Text" Value=""/>
+                        <Setter Target="SearchFolderCountTextBlock.Text" Value=""/>
+                        <Setter Target="SearchApplicationCountTextBlock.Text" Value=""/>
                     </VisualState.Setters>
                 </VisualState>
             </VisualStateGroup>
@@ -41,23 +74,129 @@
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <Button HorizontalAlignment="Right" VerticalAlignment="Top" Click="OpenFilterBoxButton_Click" Margin="0,0,5,0" Style="{StaticResource IconButtonStyle}">
+        <ToggleButton HorizontalAlignment="Right" VerticalAlignment="Top" Click="OpenFilterBoxButton_Click" Margin="0,0,5,0" Style="{StaticResource IconToggleButtonStyle}">
             <FontIcon x:Name="OpenFilterBoxButtonIcon" Glyph="&#xe70d;" FontSize="16"/>
-        </Button>
-        <Grid Grid.Column="1" RowSpacing="7">
+        </ToggleButton>
+        <ToggleButton HorizontalAlignment="Left" VerticalAlignment="Top" Click="OpenOptionsButton_Click" Margin="5,0,0,0" Style="{StaticResource IconToggleButtonStyle}" Grid.Column="2">
+            <FontIcon Glyph="&#xe713;" FontSize="16"/>
+        </ToggleButton>
+        
+        <Grid Grid.Column="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
-            <AutoSuggestBox x:Name="SearchAutoSuggestBox" HorizontalAlignment="Stretch" VerticalAlignment="Center" QuerySubmitted="AutoSuggestBox_QuerySubmitted"/>
-            <AutoSuggestBox x:Name="FilterAutoSuggestBox" HorizontalAlignment="Stretch" VerticalAlignment="Center" Visibility="Collapsed" Grid.Row="1" PlaceholderText="Filter search results"/>
+            <Grid.ChildrenTransitions>
+                <RepositionThemeTransition/>
+            </Grid.ChildrenTransitions>
+
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <AutoSuggestBox x:Name="SearchAutoSuggestBox" HorizontalAlignment="Stretch" VerticalAlignment="Center" QuerySubmitted="AutoSuggestBox_QuerySubmitted"/>
+                <TextBlock x:Name="SearchTextBlock" Grid.Row="1" Foreground="{ThemeResource SystemFillColorCaution}" Visibility="Collapsed"/>
+            </Grid>
+
+            <Grid x:Name="FilterBoxGrid" Grid.Row="1" x:Load="False" Visibility="Collapsed" Opacity="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <AutoSuggestBox 
+                    x:Name="FilterAutoSuggestBox" 
+                    HorizontalAlignment="Stretch" 
+                    VerticalAlignment="Center" 
+                    PlaceholderText="Filter search results" 
+                    Margin="0,7,0,0" 
+                    QuerySubmitted="FilterAutoSuggestBox_QuerySubmitted" 
+                    TextChanged="FilterAutoSuggestBox_TextChanged" 
+                    BorderThickness="1"/>
+                <TextBlock x:Name="FilterSearchTextBlock" Grid.Row="1" Foreground="{ThemeResource SystemFillColorCaution}"/>
+            </Grid>
+
+            <StackPanel x:Name="DropdownStackPanel" Grid.Row="2" Spacing="7" Visibility="Collapsed" Opacity="0" Margin="0,7,0,0">
+                <Grid Style="{StaticResource GridSettingStyle}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Include recycle bin" VerticalAlignment="Center" Style="{StaticResource BaseTextBlockStyle}"/>
+                    <ToggleSwitch x:Name="IncludeRecycleBinToggleSwitch" Style="{StaticResource FlippedToggleSwitchStyle}" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                </Grid>
+                <Grid Style="{StaticResource GridSettingStyle}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Split query on spaces" VerticalAlignment="Center" Style="{StaticResource BaseTextBlockStyle}"/>
+                    <ToggleSwitch x:Name="SplitQueryOnSpacesToggleSwitch" Style="{StaticResource FlippedToggleSwitchStyle}" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center" IsOn="True" Toggled="SplitQueryOnSpacesToggleSwitch_Toggled"/>
+                </Grid>
+                <Expander x:Name="ActiveDrivesExpander" Style="{StaticResource ModernExpanderStyle}">
+                    <Expander.Header>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Limit search to selected drives" VerticalAlignment="Center"/>
+                            <ToggleSwitch x:Name="IncludeAllDrivesToggleSwitch" Style="{StaticResource FlippedToggleSwitchStyle}" Grid.Column="1" Toggled="IncludeAllDrivesToggleSwitch_Toggled" VerticalAlignment="Center"/>
+                        </Grid>
+                    </Expander.Header>
+                    
+                    <GridView x:Name="DrivesGridView" SelectionMode="Multiple" ItemsSource="{x:Bind Drives}" IsEnabled="False">
+                        <GridView.ItemTemplate>
+                            <DataTemplate x:DataType="x:String">
+                                <Grid Width="90" Height="50" Background="{ThemeResource SubtleFillColorSecondaryBrush}" Padding="3,5" VerticalAlignment="Center">
+                                    <TextBlock Text="{x:Bind}" VerticalAlignment="Center" Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                                </Grid>
+                            </DataTemplate>
+                        </GridView.ItemTemplate>
+                    </GridView>
+                </Expander>
+            </StackPanel>
         </Grid>
-        <ProgressRing x:Name="LoadingProgressRing" HorizontalAlignment="Left" Grid.Column="2" Height="25" Width="25" Margin="15,0,0,0" Visibility="Collapsed"/>
+
+        <ProgressRing x:Name="LoadingProgressRing" HorizontalAlignment="Left" Grid.Column="2" Height="25" Width="25" Margin="5,0,0,0" Visibility="Collapsed">
+            <ProgressRing.RenderTransform>
+                <TranslateTransform X="50"/>
+            </ProgressRing.RenderTransform>
+        </ProgressRing>
         <TextBlock x:Name="RemainingTextBlock" HorizontalAlignment="Right" Grid.Column="2" Margin="15,0,0,0" Visibility="Collapsed"/>
 
-        <ListView x:Name="SearchResultsListView" Grid.Row="1" Grid.ColumnSpan="3" Margin="0,10,0,0">
+        <Grid Grid.Row="1" Grid.ColumnSpan="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock x:Name="SearchTimestampTextBlock"/>
+            <Grid Grid.Column="2" ColumnSpacing="5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <TextBlock Text="Files" FontSize="12" Opacity="0.6"/>
+                <TextBlock x:Name="SearchFileCountTextBlock" Grid.Row="1" Text="0"/>
+
+                <TextBlock Text="Folders" Grid.Column="1" FontSize="12" Opacity="0.6"/>
+                <TextBlock x:Name="SearchFolderCountTextBlock" Grid.Row="1" Grid.Column="1" Text="0"/>
+
+                <TextBlock Text="Applications" Grid.Column="2" FontSize="12" Opacity="0.6"/>
+                <TextBlock x:Name="SearchApplicationCountTextBlock" Grid.Row="1" Grid.Column="2" Text="0"/>
+            </Grid>
+        </Grid>
+        <ListView x:Name="SearchResultsListView" Grid.Row="2" Grid.ColumnSpan="3" Margin="0,10,0,0">
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="local:FileInfoViewModel">
                     <Grid Background="{ThemeResource SubtleFillColorTertiaryBrush}" ColumnSpacing="7" RowSpacing="4" Margin="-12,3,-6,3" CornerRadius="{StaticResource ControlCornerRadius}" Padding="5,0">

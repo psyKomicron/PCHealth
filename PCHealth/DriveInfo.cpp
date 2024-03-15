@@ -30,10 +30,7 @@ namespace pchealth::filesystem
         }
         else
         {
-            //TODO: Log or do something.
-#ifdef _DEBUG
-            throw std::exception("Failed to get disk free space (GetDiskFreeSpaceExW)");
-#endif
+            throw std::invalid_argument("Drive name. The drive can't be read.");
         }
     }
 
@@ -54,7 +51,15 @@ namespace pchealth::filesystem
                     break;
                 }
 
-                drivesList.push_back(DriveInfo(std::wstring(pointer)));
+                try
+                {
+                    drivesList.push_back(DriveInfo(std::wstring(pointer)));
+                }
+                catch (std::exception ex)
+                {
+                    auto message = ex.what();
+                    OutputDebug(message);
+                }
 
                 while (*pointer++);
             }
@@ -77,7 +82,7 @@ namespace pchealth::filesystem
         return _totalUsedSpace;
     }
 
-    std::wstring_view DriveInfo::name() const
+    std::wstring DriveInfo::name() const
     {
         return driveName;
     }

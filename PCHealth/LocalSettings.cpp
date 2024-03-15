@@ -100,6 +100,10 @@ namespace pchealth::storage
         localSettings = openOrCreate(key);
     }
 
+    std::optional<winrt::Windows::Storage::ApplicationDataContainer> LocalSettings::tryLookup(const winrt::hstring& key)
+    {
+        return {};
+    }
 
     winrt::Windows::Storage::ApplicationDataContainer LocalSettings::createContainer(const winrt::hstring& key) const
     {

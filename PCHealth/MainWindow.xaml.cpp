@@ -4,18 +4,10 @@
 #include "MainWindow.g.cpp"
 #endif
 
-#include "System.h"
-#include "DriveInfo.h"
-#include "FileSize.h"
-#include "LibraryPathes.h"
 #include "LocalSettings.h"
 #include "utilities.h"
 
 #include "DatedMessageViewModel.h"
-
-#include <shellapi.h>
-#include <ppl.h>
-#include <algorithm>
 
 #include <DispatcherQueue.h>
 #include <microsoft.ui.xaml.window.h>
@@ -58,63 +50,42 @@ namespace winrt::PCHealth::implementation
     MainWindow::MainWindow()
     {
         singleton = *this;
-
-        using namespace std::chrono_literals;
-        timer = DispatcherQueue().CreateTimer();
-        timer.Interval(15s);
-        timer.IsRepeating(false);
-        timerEventToken = timer.Tick([this](auto s, auto e)
-        {
-            BottomStatusText().Text(L"");
-        });
-        //InitializeComponent();
-    }
-
-    double MainWindow::SystemGeneralHealth()
-    {
-        return systemGeneralHealth;
-    }
-
-    void MainWindow::SystemGeneralHealth(const double& value)
-    {
-        systemGeneralHealth = value;
-        e_propertyChanged(*this, Microsoft::UI::Xaml::Data::PropertyChangedEventArgs(L"SystemGeneralHealth"));
     }
 
     void MainWindow::PostMessageToWindow(const winrt::param::hstring& longMessage, const winrt::param::hstring& shortMessage, bool recursive)
     {
-        if (!DispatcherQueue().HasThreadAccess())
-        {
-            if (recursive)
-            {
-                throw winrt::hresult_out_of_bounds(L"Preventing recursive stack overflow.");
-            }
-            DispatcherQueue().TryEnqueue([this, _longMessage = winrt::hstring(longMessage), _shortMessage = winrt::hstring(shortMessage)]
-            {
-                PostMessageToWindow(_longMessage, _shortMessage, true);
-            });
-        }
-        else
-        {
-            BottomStatusText().Text(shortMessage);
-            if (!timer.IsRunning())
-            {
-                timer.Start();
-            }
+        //if (!DispatcherQueue().HasThreadAccess())
+        //{
+        //    if (recursive)
+        //    {
+        //        throw winrt::hresult_out_of_bounds(L"Preventing recursive stack overflow.");
+        //    }
+        //    DispatcherQueue().TryEnqueue([this, _longMessage = winrt::hstring(longMessage), _shortMessage = winrt::hstring(shortMessage)]
+        //    {
+        //        PostMessageToWindow(_longMessage, _shortMessage, true);
+        //    });
+        //}
+        //else
+        //{
+        //    BottomStatusText().Text(shortMessage);
+        //    if (!timer.IsRunning())
+        //    {
+        //        timer.Start();
+        //    }
 
-            auto item = winrt::PCHealth::DatedMessageViewModel();
-            item.Message(longMessage);
-            MessagesListView().Items().Append(item);
-            if (MessagesListView().Items().Size() > 100)
-            {
-                // I18N
-                MessagesCountTextBlock().Text(L"100+");
-            }
-            else
-            {
-                MessagesCountTextBlock().Text(winrt::to_hstring(MessagesListView().Items().Size()));
-            }
-        }
+        //    auto item = winrt::PCHealth::DatedMessageViewModel();
+        //    item.Message(longMessage);
+        //    MessagesListView().Items().Append(item);
+        //    if (MessagesListView().Items().Size() > 100)
+        //    {
+        //        // I18N
+        //        MessagesCountTextBlock().Text(L"100+");
+        //    }
+        //    else
+        //    {
+        //        MessagesCountTextBlock().Text(winrt::to_hstring(MessagesListView().Items().Size()));
+        //    }
+        //}
     }
 
     void MainWindow::RootGrid_Loading(winrt::Microsoft::UI::Xaml::FrameworkElement const& sender, winrt::Windows::Foundation::IInspectable const& args)
@@ -124,209 +95,6 @@ namespace winrt::PCHealth::implementation
 
     void MainWindow::ScrollViewer_Loaded(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
     {
-        winrt::hstring path = L"v:\\videos\\p\\vanilla\\";
-        if (Common::System::PathExists(path.data()))
-        {
-            WatchedFoldersListView().Items().Append(winrt::PCHealth::WatchedFolderView(path));
-        }
-    }
-
-    winrt::Windows::Foundation::IAsyncAction MainWindow::SystemRecycleBinSizeButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
-    {
-        auto nativeWindow{ this->try_as<::IWindowNative>() };
-        HWND handle = nullptr;
-        if (&nativeWindow != nullptr)
-        {
-            nativeWindow->get_WindowHandle(&handle);
-        }
-
-        co_await winrt::resume_background();
-
-        SHQUERYRBINFO queryBinInfo{ sizeof(SHQUERYRBINFO) };
-        if (SUCCEEDED(SHEmptyRecycleBin(handle, nullptr, SHERB_NOCONFIRMATION | SHERB_NOSOUND)))
-        {
-            DispatcherQueue().TryEnqueue([this]
-            {
-                InfoBar().Severity(winrt::Microsoft::UI::Xaml::Controls::InfoBarSeverity::Success);
-                //TODO: i18n.
-                InfoBar().Message(L"Recycle bin emptied (all drives).");
-                InfoBar().IsOpen(true);
-
-                DrivesList().Children().Clear();
-                RootGrid_Loading(nullptr, nullptr);
-            });
-        }
-        else
-        {
-            DispatcherQueue().TryEnqueue([this]
-            {
-                InfoBar().Severity(winrt::Microsoft::UI::Xaml::Controls::InfoBarSeverity::Error);
-                //TODO: i18n.
-                InfoBar().Message(L"Failed to empty recycle bin.");
-                InfoBar().IsOpen(true);
-
-                DrivesList().Children().Clear();
-                RootGrid_Loading(nullptr, nullptr);
-            });
-        }
-    }
-
-    void MainWindow::HibernationFileSizeButton_Click(winrt::Windows::Foundation::IInspectable const& sender, Xaml::RoutedEventArgs const& e)
-    {
-        throw winrt::hresult_not_implemented();
-    }
-
-    winrt::Windows::Foundation::IAsyncAction MainWindow::DownloadsFolderSizeButton_Click(winrt::Windows::Foundation::IInspectable const& sender, Xaml::RoutedEventArgs const& e)
-    {
-        // Prompt user for recycling and parallelization :
-        auto&& result = co_await DirectoryDeleteConfirmation().ShowAsync();
-        if (result != Controls::ContentDialogResult::Primary)
-        {
-            co_return;
-        }
-
-        bool recycle = RecycleDeleteCheckbox().IsChecked().GetBoolean();
-        bool parallelize = ParallelizeDeleteCheckbox().IsChecked().GetBoolean();
-
-        co_await winrt::resume_background();
-
-        auto&& libs = Common::System::GetLibraries().get();
-        if (Common::System::PathExists(libs.DownloadsFolder()))
-        {
-            try
-            {
-                Common::Filesystem::DirectoryInfo dirInfo{ libs.DownloadsFolder() };
-                dirInfo.EmptyDirectory(recycle, parallelize);
-            }
-            catch (std::exception ex)
-            {
-                OutputDebugStringA(ex.what());
-            }
-            catch (winrt::hresult_error ex)
-            {
-                OutputDebugString(ex.message().c_str());
-            }
-        }
-        else
-        {
-            DispatcherQueue().TryEnqueue([this, path = libs.DownloadsFolder()]
-            {
-                InfoBar().Message(std::format(L"Downloads folder ('{}') does not exist.", path));
-            });
-        }
-    }
-
-    void MainWindow::AppBarEditButton_Click(winrt::Windows::Foundation::IInspectable const&, winrt::Microsoft::UI::Xaml::RoutedEventArgs const&)
-    {
-        WatchedFoldersListView().SelectionMode(
-            WatchedFoldersListView().SelectionMode() == winrt::Microsoft::UI::Xaml::Controls::ListViewSelectionMode::Multiple
-            ? winrt::Microsoft::UI::Xaml::Controls::ListViewSelectionMode::None
-            : winrt::Microsoft::UI::Xaml::Controls::ListViewSelectionMode::Multiple);
-
-        RemoveAppBarButton().IsEnabled(WatchedFoldersListView().SelectionMode() == winrt::Microsoft::UI::Xaml::Controls::ListViewSelectionMode::Multiple);
-    }
-
-    winrt::Windows::Foundation::IAsyncAction MainWindow::SecondPivotContentGrid_Loading(winrt::Microsoft::UI::Xaml::FrameworkElement const&, winrt::Windows::Foundation::IInspectable const&)
-    {
-        co_await winrt::resume_background();
-
-        auto settings = pchealth::storage::LocalSettings(winrt::Windows::Storage::ApplicationData::Current().LocalSettings());
-        auto pathes = settings.restoreList(L"WatchedFolders");
-        PostMessageToWindow(
-            std::format(L"Restored {} folders.", pathes.size()), 
-            std::format(L"Restored {}.", pathes.size())
-        );
-        for (winrt::hstring path : pathes)
-        {
-            DispatcherQueue().TryEnqueue([this, path]
-            {
-                AddWatchedFolder(path);
-            });
-        }
-    }
-
-    winrt::Windows::Foundation::IAsyncAction MainWindow::AppBarAddButton_Click(winrt::Windows::Foundation::IInspectable const&, winrt::Microsoft::UI::Xaml::RoutedEventArgs const&)
-    {
-        co_await FolderAddContentDialog().ShowAsync();
-        AddWatchedFolder(FolderAddContentDialogTextBox().Text());
-    }
-
-    void winrt::PCHealth::implementation::MainWindow::AppBarRemoveButton_Click(winrt::Windows::Foundation::IInspectable const&, winrt::Microsoft::UI::Xaml::RoutedEventArgs const&)
-    {
-        auto selectedItems = WatchedFoldersListView().SelectedItems();
-        uint32_t count = 0u;
-        for (int i = selectedItems.Size() - 1; i >= 0; i--)
-        {
-            auto&& selectedItem = selectedItems.GetAt(i);
-            uint32_t index = 0;
-            WatchedFoldersListView().Items().IndexOf(selectedItem, index);
-            WatchedFoldersListView().Items().RemoveAt(index);
-            count++;
-        }
-
-        DispatcherQueue().TryEnqueue([this, count]
-        {
-            PostMessageToWindow(std::format(L"Removed {} folder(s)", count), std::format(L"🗑️ x {}", count));
-        });
-    }
-
-    void winrt::PCHealth::implementation::MainWindow::AppBarSaveButton_Click(winrt::Windows::Foundation::IInspectable const&, winrt::Microsoft::UI::Xaml::RoutedEventArgs const&)
-    {
-        auto settings = pchealth::storage::LocalSettings(winrt::Windows::Storage::ApplicationData::Current().LocalSettings());
-        auto items = WatchedFoldersListView().Items();
-        std::vector<winrt::hstring> list{};
-        for (auto item : items)
-        {
-            list.push_back(item.as<winrt::PCHealth::WatchedFolderView>().FolderPath());
-        }
-        settings.saveList(L"WatchedFolders", list);
-    }
-
-    winrt::Windows::Foundation::IAsyncAction MainWindow::DrivesGrid_Loading(winrt::Microsoft::UI::Xaml::FrameworkElement const&, winrt::Windows::Foundation::IInspectable const&)
-    {
-        //TODO: Check if we need to go to background work sooner than when calculating the size of the downloads folder.
-        auto&& drives = pchealth::filesystem::DriveInfo::GetDrives();
-
-        ConnectedDrivesNumberTextBlock().Text(std::to_wstring(drives.size()));
-
-        uint64_t recycleBinTotalSize = 0;
-        for (auto&& drive : drives)
-        {
-            DriveView driveView{};
-            driveView.DriveName(drive.name());
-            driveView.Capacity(drive.capacity());
-            driveView.UsedSpace(drive.totalUsedSpace());
-            DrivesList().Children().Append(driveView);
-
-            recycleBinTotalSize += drive.getRecycleBinSize();
-        }
-
-        Common::FileSize hibernationFileSize = Common::System::GetFileSize(L"c:\\hiberfil.sys");
-        HibernationFileSize().Text(hibernationFileSize.ToString());
-        if (hibernationFileSize.Size() == 0)
-        {
-            HibernationFileSizeButton().IsEnabled(false);
-        }
-
-        Common::FileSize systemRecycleBinSize = recycleBinTotalSize;
-        SystemRecycleBinSize().Text(systemRecycleBinSize.ToString());
-        if (recycleBinTotalSize == 0)
-        {
-            SystemRecycleBinSizeButton().IsEnabled(false);
-        }
-
-        co_await winrt::resume_background();
-        auto&& libs = Common::System::GetLibraries().get();
-        auto&& downloadsFolder = libs.DownloadsFolder();
-        if (!downloadsFolder.empty())
-        {
-            Common::Filesystem::DirectoryInfo downloadsFolderInfo{ downloadsFolder };
-            auto&& downloadsFolderSize = downloadsFolderInfo.GetSize();
-            DispatcherQueue().TryEnqueue([this, downloadsSize = Common::FileSize(downloadsFolderSize)]
-            {
-                DownloadsFolderSize().Text(downloadsSize.ToString());
-            });
-        }
     }
 
 
@@ -463,31 +231,10 @@ namespace winrt::PCHealth::implementation
 
     void MainWindow::AppWindow_Closing(winrt::Microsoft::UI::Windowing::AppWindow, winrt::Microsoft::UI::Windowing::AppWindowClosingEventArgs)
     {
-        AppBarSaveButton_Click(nullptr, nullptr);
         SaveWindow();
 
         backdropController.Close();
         dispatcherQueueController.ShutdownQueueAsync();
-    }
-
-    void MainWindow::AddWatchedFolder(const winrt::hstring& path)
-    {
-        if (Common::System::PathExists(path.data()))
-        {
-            for (auto&& item : WatchedFoldersListView().Items())
-            {
-                auto&& view = item.try_as<winrt::PCHealth::WatchedFolderView>();
-                if (view && view.FolderPath() == path)
-                {
-                    return;
-                }
-            }
-
-            WatchedFoldersListView().Items().Append(winrt::PCHealth::WatchedFolderView(path));
-
-            // I18N
-            PostMessageToWindow(std::format(L"Added new folder : {}", path), std::format(L"+📂 {}", path));
-        }
     }
 
     void MainWindow::SaveWindow()
@@ -498,17 +245,16 @@ namespace winrt::PCHealth::implementation
         settings.insert(L"Width", appWindow.Size().Width);
         settings.insert(L"PosX", appWindow.Position().X);
         settings.insert(L"PosY", appWindow.Position().Y);
-        settings.insert(L"PivotLastIndex", WindowPivot().SelectedIndex());
     }
 
     void MainWindow::RestoreWindow()
     {
         pchealth::storage::LocalSettings settings{ winrt::Windows::Storage::ApplicationData::Current().LocalSettings() };
         settings.openOrCreateAndMoveTo(L"MainWindow");
-        /*settings.tryLookup<int32_t>(L"Height");
-        settings.tryLookup<int32_t>(L"Width");
-        settings.tryLookup<int32_t>(L"PosX");
-        settings.tryLookup<int32_t>(L"PosY");*/
-        WindowPivot().SelectedIndex(settings.tryLookup<int32_t>(L"PivotLastIndex").value_or(0));
+        winrt::Windows::Graphics::RectInt32 display{};
+        display.Height = settings.tryLookup<int32_t>(L"Height").value_or(600);
+        display.Width = settings.tryLookup<int32_t>(L"Width").value_or(800);
+        display.X = settings.tryLookup<int32_t>(L"PosX").value_or(30);
+        display.Y = settings.tryLookup<int32_t>(L"PosY").value_or(30);
     }
 }

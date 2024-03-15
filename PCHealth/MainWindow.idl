@@ -7,8 +7,6 @@ namespace PCHealth
         
         static MainWindow Current{ get; };
 
-        Double SystemGeneralHealth;
-
         void PostMessageToWindow(String longMessage, String shortMessage, Boolean recursive);
     }
 }

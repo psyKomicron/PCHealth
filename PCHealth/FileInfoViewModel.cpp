@@ -70,4 +70,14 @@ namespace winrt::PCHealth::implementation
     {
         _thumbnail = value;
     }
+    
+    int32_t FileInfoViewModel::Kind() const
+    {
+        return _kind;
+    }
+
+    void FileInfoViewModel::Kind(const int32_t value)
+    {
+        _kind = value;
+    }
 }

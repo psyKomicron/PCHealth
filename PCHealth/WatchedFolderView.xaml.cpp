@@ -103,7 +103,7 @@ namespace winrt::PCHealth::implementation
                 });
             }
 
-            Common::Filesystem::DirectorySizeCalculator calculator{};
+            pchealth::filesystem::DirectorySizeCalculator calculator{};
             uint_fast64_t size = calculator.GetSize(_folderPath.data());
             DispatcherQueue().TryEnqueue([this, size]
             {

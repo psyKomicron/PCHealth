@@ -7,12 +7,12 @@
 #include <Windows.h>
 #include <shlwapi.h>
 
-namespace Common::Filesystem
+namespace pchealth::filesystem
 {
     UserLibraries UserLibraries::getUserLibraries(const wchar_t& driveLetter)
     {
         std::wstring drivePath = std::format(L"{}:\\", driveLetter);
-        if (!System::PathExists(drivePath))
+        if (!pchealth::windows::System::pathExists(drivePath))
         {
             throw std::invalid_argument("Drive doesn't exists.");
         }
@@ -23,10 +23,13 @@ namespace Common::Filesystem
         }
         else
         {
-            std::vector<DirectoryInfo> rootDirs = System::EnumerateDirectories(drivePath);
+#ifdef _DEBUG
+            throw winrt::hresult_not_implemented();
+#else
+            std::vector<DirectoryInfo> rootDirs/* = pchealth::windows::System::EnumerateDirectories(drivePath)*/{};
             for (auto&& dirInfo : rootDirs)
             {
-                std::vector<DirectoryInfo> depth1Folders = System::EnumerateDirectories(drivePath);
+                std::vector<DirectoryInfo> depth1Folders/* = pchealth::windows::System::EnumerateDirectories(drivePath)*/{};
                 for (auto&& subDirInfo : depth1Folders)
                 {
                     if (isFolderLibraryRoot(subDirInfo.Path()))
@@ -45,6 +48,7 @@ namespace Common::Filesystem
                     }
                 }
             }
+#endif
         }
 
         return UserLibraries();

@@ -16,13 +16,13 @@
 
 #define MIMIC_DELETE
 
-namespace Common::Filesystem::ComPtrs
+namespace pchealth::filesystem::ComPtrs
 {
     _COM_SMARTPTR_TYPEDEF(IFileOperation, __uuidof(IFileOperation));
     _COM_SMARTPTR_TYPEDEF(IShellItem, __uuidof(IShellItem));
 }
 
-namespace Common::Filesystem
+namespace pchealth::filesystem
 {
     DirectoryInfo::DirectoryInfo(const std::wstring& directoryPath)
     {

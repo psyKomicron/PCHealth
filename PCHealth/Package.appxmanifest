@@ -7,18 +7,19 @@
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
   xmlns:com="http://schemas.microsoft.com/appx/manifest/com/windows10"
   xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
-  IgnorableNamespaces="uap rescap com">
+  xmlns:iot="http://schemas.microsoft.com/appx/manifest/iot/windows10"
+  IgnorableNamespaces="uap rescap com iot">
 
   <Identity
     Name="c07b4644-0e2a-4a36-8f06-54e1424c9237"
-    Publisher="CN=Julien Marquet"
+    Publisher="CN=psyKomicron"
     Version="1.0.2.0" />
 
   <mp:PhoneIdentity PhoneProductId="c07b4644-0e2a-4a36-8f06-54e1424c9237" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
     <DisplayName>PCHealth</DisplayName>
-    <PublisherDisplayName>Julien Marquet</PublisherDisplayName>
+    <PublisherDisplayName>psyKomicron</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 
@@ -63,5 +64,6 @@
 
   <Capabilities>
     <rescap:Capability Name="runFullTrust" />
+    <iot:Capability Name="systemManagement"/>
   </Capabilities>
 </Package>

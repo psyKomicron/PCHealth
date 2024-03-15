@@ -4,5 +4,7 @@ namespace PCHealth
     runtimeclass SystemSearchViewer : Microsoft.UI.Xaml.Controls.UserControl
     {
         SystemSearchViewer();
+
+        IObservableVector<String> Drives{ get; };
     }
 }

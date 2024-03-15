@@ -3,12 +3,14 @@
 #include "DriveInfo.h"
 #include "LibraryPathes.h"
 
+#include "DirectoryInfo.h"
+#include "DisplayMonitor.h"
+
 #include <string>
 #include <vector>
 #include <ppltasks.h>
-#include <DirectoryInfo.h>
 
-namespace Common
+namespace pchealth::windows
 {
 	class System
 	{
@@ -17,11 +19,11 @@ namespace Common
 
 		static int GetGeneralHealth();
 		static concurrency::task<pchealth::filesystem::LibraryPathes> GetLibraries();
-		static std::vector<Filesystem::DirectoryInfo> EnumerateDirectories(const std::wstring& path);
 		static std::wstring GetCurrentUserName();
 		static uint64_t GetFileSize(const std::wstring& filePath);
-		static bool RemoveHibernationFile();
-		static bool PathExists(const std::wstring& path);
+		static bool removeHibernationFile();
+		static bool pathExists(const std::wstring& path);
+		static bool openExplorer(std::wstring args);
 
 	private:
 		static concurrency::task<std::vector<std::wstring>> GetLibraryFolders(winrt::Windows::System::User* user,

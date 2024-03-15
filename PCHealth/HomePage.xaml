@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="PCHealth.HomePage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:PCHealth"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Loading="Page_Loading">
+    <ScrollViewer>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!--#region Top menu -->
+            <VariableSizedWrapGrid ItemWidth="120" ItemHeight="90" VerticalAlignment="Stretch" HorizontalAlignment="Center" Orientation="Horizontal" Grid.Row="0">
+                <Grid Style="{StaticResource GridSettingStyle}" Padding="10" CornerRadius="{StaticResource OverlayCornerRadius}" ColumnSpacing="10" Margin="7">
+                    <Button HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                        <Viewbox MaxHeight="30">
+                            <FontIcon Glyph="&#xeda2;" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </Viewbox>
+                    </Button>
+                </Grid>
+
+                <Grid Style="{StaticResource GridSettingStyle}" Padding="10" CornerRadius="{StaticResource OverlayCornerRadius}" ColumnSpacing="10" Margin="7">
+                    <Button HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                        <Viewbox MaxHeight="30">
+                            <FontIcon Glyph="&#xf12b;" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </Viewbox>
+                    </Button>
+                </Grid>
+
+                <Grid Style="{StaticResource GridSettingStyle}" Padding="10" CornerRadius="{StaticResource OverlayCornerRadius}" ColumnSpacing="10" Margin="7">
+                    <Button HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                        <Viewbox MaxHeight="30">
+                            <FontIcon Glyph="&#xf0e3;" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </Viewbox>
+                    </Button>
+                </Grid>
+
+                <Grid Style="{StaticResource GridSettingStyle}" Padding="10" CornerRadius="{StaticResource OverlayCornerRadius}" ColumnSpacing="10" Margin="7">
+                    <Button HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                        <Viewbox MaxHeight="30">
+                            <FontIcon Glyph="&#xf78b;" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </Viewbox>
+                    </Button>
+                </Grid>
+            </VariableSizedWrapGrid>
+            <!--#endregion-->
+
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="2*"/>
+                </Grid.ColumnDefinitions>
+
+                <!--#region Left panel -->
+                <Grid Grid.Column="0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <VariableSizedWrapGrid x:Name="SecondGrid" ItemWidth="170" ItemHeight="110" Orientation="Horizontal"/>
+                    
+                    <VariableSizedWrapGrid x:Name="FavoritesWatchedFolders" ItemWidth="170" ItemHeight="110" Orientation="Horizontal" Grid.Row="1">
+                        <Grid 
+                            Style="{StaticResource GridSettingStyle}" Padding="10" CornerRadius="{StaticResource OverlayCornerRadius}" ColumnSpacing="10" Margin="7"  VariableSizedWrapGrid.RowSpan="2" VariableSizedWrapGrid.ColumnSpan="1">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="Recycle bin" Opacity="0.6"/>
+                            <Viewbox Grid.Row="1" Margin="0,6,0,6">
+                                <Grid>
+                                    <Ellipse Height="100" Width="100" Grid.RowSpan="2" Stroke="Green" HorizontalAlignment="Stretch" StrokeThickness="7"/>
+                                    <TextBlock Text="120 Gb" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Grid>
+                            </Viewbox>
+
+                            <StackPanel Grid.Row="2" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                <Button Style="{StaticResource IconButtonStyle}">
+                                    <FontIcon Glyph="&#xe74d;"/>
+                                </Button>
+                                <Button Style="{StaticResource IconButtonStyle}">
+                                    <FontIcon Glyph="&#xe8da;"/>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                    </VariableSizedWrapGrid>
+                </Grid>
+                <!--#endregion-->
+
+                <!--#region Search widget -->
+                <Grid Grid.Column="1" Style="{StaticResource GridSettingStyle}" Padding="10" CornerRadius="{StaticResource OverlayCornerRadius}" VariableSizedWrapGrid.ColumnSpan="4" VariableSizedWrapGrid.RowSpan="3" ColumnSpacing="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Column="1" Text="Search" Style="{StaticResource BodyStrongTextBlockStyle}" Opacity="0.6"/>
+
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox MaxHeight="32" MinHeight="30" Margin="4,0,0,0"/>
+                        <Button Style="{StaticResource IconButtonStyle}" Grid.Column="1">
+                            <FontIcon Glyph="&#xf78b;"/>
+                        </Button>
+                    </Grid>
+
+                    <ListView Grid.Row="2">
+                        <TextBlock Text="9009enklnsdf"/>
+                        <TextBlock Text="9009enklnsdf"/>
+                        <TextBlock Text="9009enklnsdf"/>
+                    </ListView>
+                </Grid>
+                <!--#endregion-->
+            </Grid>
+            
+        </Grid>
+    </ScrollViewer>
+</Page>

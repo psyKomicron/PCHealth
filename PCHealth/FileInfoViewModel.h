@@ -24,6 +24,8 @@ namespace winrt::PCHealth::implementation
         bool IsFileSystemEntry() const;
         winrt::Microsoft::UI::Xaml::Media::Imaging::BitmapImage Thumbnail() const;
         void Thumbnail(const winrt::Microsoft::UI::Xaml::Media::Imaging::BitmapImage& value);
+        int32_t Kind() const;
+        void Kind(const int32_t value);
 
     private:
         winrt::hstring _name{};
@@ -32,6 +34,7 @@ namespace winrt::PCHealth::implementation
         bool _isDirectory = false;
         bool _isApplication = false;
         winrt::Microsoft::UI::Xaml::Media::Imaging::BitmapImage _thumbnail{ nullptr };
+        int32_t _kind = 0;
     };
 }
 

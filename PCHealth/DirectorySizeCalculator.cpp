@@ -6,7 +6,7 @@
 
 namespace Foundation = winrt::Windows::Foundation;
 
-namespace Common::Filesystem
+namespace pchealth::filesystem
 {
     const int ALTERNATE_MAX_PATH = 2048;
 

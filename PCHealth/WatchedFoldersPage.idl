@@ -1,0 +1,8 @@
+namespace PCHealth
+{
+    [default_interface]
+    runtimeclass WatchedFoldersPage : Microsoft.UI.Xaml.Controls.Page
+    {
+        WatchedFoldersPage();
+    }
+}

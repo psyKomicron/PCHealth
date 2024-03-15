@@ -1,0 +1,14 @@
+namespace PCHealth
+{
+    [default_interface]
+    runtimeclass DisplayView : Microsoft.UI.Xaml.Controls.UserControl
+    {
+        DisplayView();
+        Int32 DisplayIndex;
+        String DisplayName;
+        IVector<IInspectable> ResolutionsItems{ get; };
+
+        void AddSupportedResolution(UInt32 x, UInt32 y, UInt32 frequency);
+        void SetCurrentResolution(UInt32 x, UInt32 y, UInt32 frequency);
+    }
+}

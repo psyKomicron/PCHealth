@@ -23,4 +23,11 @@ namespace pchealth::utilities
     {
         return static_cast<T>(std::stoi(s.c_str()));
     }
+
+    template<typename T>
+    T createWin32Struct()
+    {
+        T s{ sizeof(T) };
+        return s;
+    }
 }
