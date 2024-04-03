@@ -37,6 +37,9 @@
     <Page Include="DisplayView.xaml">
       <Filter>winui\Controls</Filter>
     </Page>
+    <Page Include="SystemSearchPage2.xaml">
+      <Filter>winui\Pages</Filter>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Midl Include="App.idl" />
@@ -65,9 +68,6 @@
     <ClCompile Include="DirectorySizeCalculator.cpp">
       <Filter>lib\filesystem</Filter>
     </ClCompile>
-    <ClCompile Include="FileSize.cpp">
-      <Filter>lib</Filter>
-    </ClCompile>
     <ClCompile Include="UserLibraries.cpp">
       <Filter>lib\filesystem</Filter>
     </ClCompile>
@@ -79,9 +79,6 @@
     </ClCompile>
     <ClCompile Include="HotKey.cpp">
       <Filter>lib\win32</Filter>
-    </ClCompile>
-    <ClCompile Include="LocalSettings.cpp">
-      <Filter>lib</Filter>
     </ClCompile>
     <ClCompile Include="Directory.cpp">
       <Filter>lib\filesystem</Filter>
@@ -104,6 +101,27 @@
     <ClCompile Include="DisplayMonitor.cpp">
       <Filter>lib\windows</Filter>
     </ClCompile>
+    <ClCompile Include="VisualState.cpp">
+      <Filter>winui</Filter>
+    </ClCompile>
+    <ClCompile Include="VisualStateManager.cpp">
+      <Filter>winui</Filter>
+    </ClCompile>
+    <ClCompile Include="LocalSettings.cpp">
+      <Filter>lib\storage</Filter>
+    </ClCompile>
+    <ClCompile Include="CompositeSetting.cpp">
+      <Filter>lib\storage</Filter>
+    </ClCompile>
+    <ClCompile Include="LocalSettingsShortcuts.cpp">
+      <Filter>lib\storage</Filter>
+    </ClCompile>
+    <ClCompile Include="CancellationException.cpp">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="FileSize.cpp">
+      <Filter>lib\filesystem</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -125,9 +143,6 @@
     <ClInclude Include="DirectorySizeCalculator.h">
       <Filter>lib\filesystem</Filter>
     </ClInclude>
-    <ClInclude Include="FileSize.h">
-      <Filter>lib</Filter>
-    </ClInclude>
     <ClInclude Include="UserLibraries.h">
       <Filter>lib\filesystem</Filter>
     </ClInclude>
@@ -140,10 +155,7 @@
     <ClInclude Include="HotKey.h">
       <Filter>lib\win32</Filter>
     </ClInclude>
-    <ClInclude Include="LocalSettings.h">
-      <Filter>lib</Filter>
-    </ClInclude>
-    <ClInclude Include="Directory.h">
+    <ClInclude Include="Directory.hpp">
       <Filter>lib\filesystem</Filter>
     </ClInclude>
     <ClInclude Include="Searcher.h">
@@ -161,8 +173,29 @@
     <ClInclude Include="utilities.h">
       <Filter>lib</Filter>
     </ClInclude>
-    <ClInclude Include="DisplayMonitor.h">
+    <ClInclude Include="DisplayMonitor.hpp">
       <Filter>lib\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="VisualState.hpp">
+      <Filter>winui</Filter>
+    </ClInclude>
+    <ClInclude Include="VisualStateManager.hpp">
+      <Filter>winui</Filter>
+    </ClInclude>
+    <ClInclude Include="LocalSettings.h">
+      <Filter>lib\storage</Filter>
+    </ClInclude>
+    <ClInclude Include="CompositeSetting.hpp">
+      <Filter>lib\storage</Filter>
+    </ClInclude>
+    <ClInclude Include="LocalSettingsShortcuts.hpp">
+      <Filter>lib\storage</Filter>
+    </ClInclude>
+    <ClInclude Include="CancellationException.hpp">
+      <Filter>lib</Filter>
+    </ClInclude>
+    <ClInclude Include="FileSize.h">
+      <Filter>lib\filesystem</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -219,16 +252,19 @@
     <Filter Include="winui\Assets">
       <UniqueIdentifier>{ed3e1aa7-36b6-4841-816c-05f907221ed6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="lib\storage">
+      <UniqueIdentifier>{f077ab08-560c-4228-983b-c3311e154c0a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="CHANGELOG.md" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config">
-      <Filter>winui</Filter>
+      <Filter>winui\Assets</Filter>
     </None>
     <None Include="PCHealth_TemporaryKey.pfx">
-      <Filter>winui</Filter>
+      <Filter>winui\Assets</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -246,7 +282,12 @@
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">
-      <Filter>winui</Filter>
+      <Filter>winui\Assets</Filter>
     </AppxManifest>
+  </ItemGroup>
+  <ItemGroup>
+    <PRIResource Include="Resources.resw">
+      <Filter>winui\Assets</Filter>
+    </PRIResource>
   </ItemGroup>
 </Project>

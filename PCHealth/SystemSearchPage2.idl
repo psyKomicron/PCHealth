@@ -1,0 +1,8 @@
+namespace PCHealth
+{
+    [default_interface]
+    runtimeclass SystemSearchPage2 : Microsoft.UI.Xaml.Controls.Page
+    {
+        SystemSearchPage2();
+    }
+}

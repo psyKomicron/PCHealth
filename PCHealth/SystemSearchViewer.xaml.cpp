@@ -20,161 +20,264 @@
 
 namespace collections = winrt::Windows::Foundation::Collections;
 namespace xaml = winrt::Microsoft::UI::Xaml;
+namespace storage = winrt::Windows::Storage;
 
-namespace winrt::PCHealth::implementation
+using namespace winrt::PCHealth::implementation;
+
+SystemSearchViewer::SystemSearchViewer()
 {
-    SystemSearchViewer::SystemSearchViewer()
-    {
-        searcher = std::unique_ptr<pchealth::windows::search::Searcher>(
-            new pchealth::windows::search::Searcher(
-                false,
-                [this](auto&& s, auto&& b)
-                {
-                    concurrency::create_task([this, s, b]()
-                    {
-                        AddSearchResult(s, b);
-                    });
-                })
-        );
-    }
-
-    winrt::Windows::Foundation::Collections::IObservableVector<winrt::hstring> SystemSearchViewer::Drives() const
-    {
-        return _drives;
-    }
-
-    winrt::Windows::Foundation::IAsyncAction SystemSearchViewer::UserControl_Loading(xaml::FrameworkElement const&, winrt::Windows::Foundation::IInspectable const&)
-    {
-        auto&& drives = pchealth::filesystem::DriveInfo::GetDrives();
-        for (auto&& drive : drives)
-        {
-            _drives.Append(drive.name());
-        }
-        co_return;
-    }
-
-    winrt::Windows::Foundation::IAsyncAction SystemSearchViewer::AutoSuggestBox_QuerySubmitted(xaml::Controls::AutoSuggestBox const&, xaml::Controls::AutoSuggestBoxQuerySubmittedEventArgs const& args)
-    {
-        searchApplicationCount = 0;
-        searchFileCount = 0;
-        searchFolderCount = 0;
-
-        _searchResults.Clear();
-        _filterResults.Clear();
-        SearchResultsListView().ItemsSource(_searchResults);
-        xaml::VisualStateManager::GoToState(*this, L"Search", true);
-
-        winrt::hstring queryText = args.QueryText();
-        std::vector<pchealth::filesystem::DriveInfo> includedDrives{};
-        if (IncludeAllDrivesToggleSwitch().IsOn())
-        {
-            auto&& selected = DrivesGridView().SelectedItems();
-            bool includeAll = selected.Size() == Drives().Size();
-            if (!includeAll)
+    searcher = std::unique_ptr<pchealth::windows::search::Searcher>(
+        new pchealth::windows::search::Searcher(
+            false,
+            [this](auto&& s, auto&& b)
             {
-                for (auto&& item : selected)
+                concurrency::create_task([this, vector = std::move(s), b]()
                 {
-                    includedDrives.push_back(pchealth::filesystem::DriveInfo(std::wstring(item.as<winrt::hstring>())));
-                }
+                    AddSearchResult(vector, b);
+                });
+            }));
+
+    // Initialize visual state manager states.
+    visualStateManager.initializeStates
+    ({
+        SystemSearchViewerStates::FilterSearchState,
+        SystemSearchViewerStates::NormalState,
+        SystemSearchViewerStates::OptionsCloseState,
+        SystemSearchViewerStates::OptionsOpenState,
+        SystemSearchViewerStates::RestState,
+        SystemSearchViewerStates::SearchState,
+    });
+}
+
+winrt::Windows::Foundation::Collections::IObservableVector<winrt::hstring> SystemSearchViewer::Drives() const
+{
+    return _drives;
+}
+
+winrt::Windows::Foundation::IAsyncAction SystemSearchViewer::Search(const winrt::hstring& _query)
+{
+    // Capture parameter.
+    hstring query{ _query };
+    searchApplicationCount.store(0);
+    searchFileCount.store(0);
+    searchFolderCount.store(0);
+
+    SearchFileCountTextBlock().Text(L"");
+    SearchFolderCountTextBlock().Text(L"");
+    SearchApplicationCountTextBlock().Text(L"");
+
+    _searchResults.Clear();
+    _filterResults.Clear();
+    SearchResultsListView().ItemsSource(_searchResults);
+    SearchAutoSuggestBox().Text(query);
+    visualStateManager.goToState(SystemSearchViewerStates::SearchState);
+
+    std::vector<pchealth::filesystem::DriveInfo> includedDrives{};
+    if (IncludeAllDrivesToggleSwitch().IsOn())
+    {
+        auto&& selected = DrivesGridView().SelectedItems();
+        bool includeAll = selected.Size() == Drives().Size();
+        if (!includeAll)
+        {
+            for (auto&& item : selected)
+            {
+                includedDrives.push_back(pchealth::filesystem::DriveInfo(std::wstring(item.as<winrt::hstring>())));
             }
         }
+    }
 
-        co_await winrt::resume_background();
+    co_await winrt::resume_background();
 
-        if (!queryText.empty())
+    if (!query.empty())
+    {
+        searchHistory.push_back(query);
+
+        DispatcherQueue().TryEnqueue([&]()
         {
-            searchHistory.push_back(queryText);
+            RemainingTextBlock().Text(winrt::to_hstring(searcher->remaining()));
+        });
 
-            DispatcherQueue().TryEnqueue([&]()
+        try
+        {
+            searcher->search(std::wstring(query), includedDrives);
+        }
+        catch (boost::regex_error err)
+        {
+            DispatcherQueue().TryEnqueue([this, err]()
             {
-                RemainingTextBlock().Text(winrt::to_hstring(searcher->remaining()));
+                SearchTextBlock().Text(winrt::to_hstring(err.what()));
+                SearchTextBlock().Visibility(xaml::Visibility::Visible);
             });
-
-            try
-            {
-                searcher->search(std::wstring(queryText), includedDrives);
-            }
-            catch (std::regex_error& ex)
+        }
+        catch (std::invalid_argument& ex)
+        {
+            DispatcherQueue().TryEnqueue([this, ex]()
             {
                 SearchTextBlock().Text(winrt::to_hstring(ex.what()));
                 SearchTextBlock().Visibility(xaml::Visibility::Visible);
-            }
+            });
+        }
 
-            DispatcherQueue().TryEnqueue([&]()
+        DispatcherQueue().TryEnqueue([this, text = query]()
+        {
+            visualStateManager.goToState(SystemSearchViewerStates::RestState);
+            AddMessage(L"Finished searching: " + text, 0);
+        });
+    }
+    else
+    {
+        AddMessage(L"Query is empty.", 3);
+    }
+}
+
+winrt::Windows::Foundation::IAsyncAction SystemSearchViewer::UserControl_Loading(xaml::FrameworkElement const&, winrt::Windows::Foundation::IInspectable const&)
+{
+    co_await resume_background();
+    
+    auto&& drives = pchealth::filesystem::DriveInfo::getDrives();
+    for (auto&& drive : drives)
+    {
+        DispatcherQueue().TryEnqueue([this, driveName = drive.name()]()
+        {
+            _drives.Append(driveName);
+        });
+    }
+}
+
+winrt::Windows::Foundation::IAsyncAction SystemSearchViewer::AutoSuggestBox_QuerySubmitted(xaml::Controls::AutoSuggestBox const&, xaml::Controls::AutoSuggestBoxQuerySubmittedEventArgs const& args)
+{
+    co_await Search(args.QueryText());
+}
+
+void SystemSearchViewer::CopyPathButton_Click(winrt::Windows::Foundation::IInspectable const& sender, xaml::RoutedEventArgs const&)
+{
+    hstring tag = sender.as<xaml::Controls::Button>().Tag().as<hstring>();
+    Windows::ApplicationModel::DataTransfer::DataPackage package{};
+    package.SetText(tag);
+    Windows::ApplicationModel::DataTransfer::Clipboard::SetContent(package);
+}
+
+winrt::Windows::Foundation::IAsyncAction SystemSearchViewer::OpenFileExplorerButton_Click(winrt::Windows::Foundation::IInspectable const& sender, xaml::RoutedEventArgs const&)
+{
+    winrt::hstring tag = sender.as<xaml::Controls::Button>().Tag().as<winrt::hstring>();
+    std::filesystem::path path{ std::wstring(tag) };
+
+    co_await winrt::resume_background();
+
+    try
+    {
+        pchealth::windows::System::openExplorer(path.wstring());
+    }
+    catch (winrt::hresult_error err)
+    {
+        OutputDebug(std::wstring(err.message()));
+    }
+}
+
+void SystemSearchViewer::OpenFilterBoxButton_Click(winrt::Windows::Foundation::IInspectable const&, xaml::RoutedEventArgs const&)
+{
+    visualStateManager.switchState(SystemSearchViewerStates::FilterSearchState.group());
+}
+
+void SystemSearchViewer::OpenOptionsButton_Click(winrt::Windows::Foundation::IInspectable const&, xaml::RoutedEventArgs const&)
+{
+    visualStateManager.switchState(SystemSearchViewerStates::OptionsOpenState.group());
+}
+
+void SystemSearchViewer::FilterAutoSuggestBox_QuerySubmitted(xaml::Controls::AutoSuggestBox const&, xaml::Controls::AutoSuggestBoxQuerySubmittedEventArgs const& args)
+{
+    auto queryText = std::wstring(args.QueryText());
+    FilterSearch(queryText);
+}
+
+void SystemSearchViewer::IncludeAllDrivesToggleSwitch_Toggled(winrt::Windows::Foundation::IInspectable const&, xaml::RoutedEventArgs const&)
+{
+    DrivesGridView().IsEnabled(IncludeAllDrivesToggleSwitch().IsOn());
+}
+
+void SystemSearchViewer::FilterAutoSuggestBox_TextChanged(xaml::Controls::AutoSuggestBox const&, xaml::Controls::AutoSuggestBoxTextChangedEventArgs const& args)
+{
+    if (args.CheckCurrent())
+    {
+        auto queryText = std::wstring(FilterAutoSuggestBox().Text());
+        FilterSearch(queryText);
+    }
+}
+
+void SystemSearchViewer::MatchFilePathToggleSwitch_Toggled(winrt::Windows::Foundation::IInspectable const&, xaml::RoutedEventArgs const&)
+{
+    searcher->matchFilePath(MatchFilePathToggleSwitch().IsOn());
+}
+
+void SystemSearchViewer::SearchResultsListView_DoubleTapped(winrt::Windows::Foundation::IInspectable const&, xaml::Input::DoubleTappedRoutedEventArgs const&)
+{
+    auto&& selectedItem = SearchResultsListView().SelectedItem();
+    if (selectedItem != nullptr)
+    {
+        auto view = selectedItem.try_as<PCHealth::FileInfoViewModel>();
+        if (view != nullptr)
+        {
+            Windows::System::Launcher::LaunchUriAsync(Windows::Foundation::Uri(view.Path())).Completed([this, view](auto&& task, auto&&)
             {
-                xaml::VisualStateManager::GoToState(*this, L"Rest", true);
+                bool b = task.GetResults();
+                if (!b)
+                {
+                    OUTPUT_DEBUG(L"[SystemSearchViewer] Launcher couldn't launch file, falling back to Win32 api.");
+                    try
+                    {
+                        pchealth::windows::System::launch(std::wstring(view.Path()));
+                        b = true;
+                    }
+                    catch (const winrt::hresult_error& ex)
+                    {
+                        OUTPUT_DEBUG(std::format(L"[SystemSearchViewer] System::launch failed: {}", ex.message().data()));
+                    }
+                }
+
+                DispatcherQueue().TryEnqueue([this, b, viewName = view.Name()]()
+                {
+                    if (b)
+                    {
+                        AddMessage(L"Launched " + viewName, 1);
+                    }
+                    else
+                    {
+                        AddMessage(L"Failed to launch " + viewName, 3);
+                    }
+                });
             });
         }
     }
+}
 
-    void SystemSearchViewer::CopyPathButton_Click(winrt::Windows::Foundation::IInspectable const& sender, xaml::RoutedEventArgs const&)
+void SystemSearchViewer::CancelSearchButton_Click(Windows::Foundation::IInspectable const&, xaml::RoutedEventArgs const&)
+{
+    AddMessage(L"Cancelling current search...", 2);
+    if (searcher->isSearchRunning())
     {
-        winrt::hstring tag = sender.as<xaml::Controls::Button>().Tag().as<winrt::hstring>();
-        winrt::Windows::ApplicationModel::DataTransfer::DataPackage package{};
-        package.SetText(tag);
-        winrt::Windows::ApplicationModel::DataTransfer::Clipboard::SetContent(package);
+        searcher->cancelCurrentSearch();
+        AddMessage(L"Cancelled search.", 2);
     }
+}
 
-    winrt::Windows::Foundation::IAsyncAction SystemSearchViewer::OpenFileExplorerButton_Click(winrt::Windows::Foundation::IInspectable const& sender, xaml::RoutedEventArgs const&)
+
+void SystemSearchViewer::AddSearchResult(std::vector<pchealth::windows::search::SearchResult> finds, const bool& update)
+{
+    if (!searcher->isSearchCancelled() 
+        && (searchFileCount.load() + searchFolderCount.load() + searchApplicationCount.load()) > 5000)
     {
-        winrt::hstring tag = sender.as<xaml::Controls::Button>().Tag().as<winrt::hstring>();
-        std::filesystem::path path{ std::wstring(tag) };
-
-        co_await winrt::resume_background();
-        
-        try
+        searcher->cancelCurrentSearch();
+        DispatcherQueue().TryEnqueue([this]()
         {
-            pchealth::windows::System::openExplorer(path.wstring());
-        }
-        catch (winrt::hresult_error err)
-        {
-            OutputDebug(std::wstring(err.message()));
-        }
+            AddMessage(L"Cancelled search, over 1k results.", 2);
+        });
     }
-
-    void SystemSearchViewer::OpenFilterBoxButton_Click(winrt::Windows::Foundation::IInspectable const&, xaml::RoutedEventArgs const&)
+    else if (!searcher->isSearchCancelled())
     {
-        static bool state = true;
-        GoToVisualState(state, L"FilterSearch", L"NormalSearch");
-    }
-
-    void SystemSearchViewer::OpenOptionsButton_Click(winrt::Windows::Foundation::IInspectable const&, xaml::RoutedEventArgs const&)
-    {
-        static bool state = true;
-        GoToVisualState(state, L"OptionsOpen", L"OptionsClose");
-    }
-
-    void SystemSearchViewer::FilterAutoSuggestBox_QuerySubmitted(xaml::Controls::AutoSuggestBox const& sender, xaml::Controls::AutoSuggestBoxQuerySubmittedEventArgs const& args)
-    {
-        auto queryText = std::wstring(args.QueryText());
-        FilterSearch(queryText);
-    }
-
-    void SystemSearchViewer::IncludeAllDrivesToggleSwitch_Toggled(winrt::Windows::Foundation::IInspectable const&, xaml::RoutedEventArgs const&)
-    {
-        DrivesGridView().IsEnabled(IncludeAllDrivesToggleSwitch().IsOn());
-    }
-
-    void SystemSearchViewer::FilterAutoSuggestBox_TextChanged(xaml::Controls::AutoSuggestBox const&, xaml::Controls::AutoSuggestBoxTextChangedEventArgs const& args)
-    {
-        if (args.CheckCurrent())
-        {
-            auto queryText = std::wstring(FilterAutoSuggestBox().Text());
-            FilterSearch(queryText);
-        }
-    }
-
-    void SystemSearchViewer::SplitQueryOnSpacesToggleSwitch_Toggled(winrt::Windows::Foundation::IInspectable const&, xaml::RoutedEventArgs const&)
-    {
-    }
-
-
-    void SystemSearchViewer::AddSearchResult(const std::vector<pchealth::windows::search::SearchResult>& finds, const bool& update)
-    {
-        DispatcherQueue().TryEnqueue([this, update]()
+        DispatcherQueue().TryEnqueue([this]()
         {
             auto remaining = static_cast<double>(searcher->remaining());
-            //RemainingTextBlock().Text(winrt::to_hstring(remaining));
+            RemainingTextBlock().Text(winrt::to_hstring(remaining));
 
             if (remaining > 0)
             {
@@ -193,196 +296,265 @@ namespace winrt::PCHealth::implementation
 
         if (update)
         {
-            concurrency::parallel_for_each(std::begin(finds), std::end(finds), [this](auto searchResult)
-            {
-                if (searchResult.result().empty())
-                {
-                    return;
-                }
+            const bool dispatchForElements = true;
 
-                try
+            if constexpr (dispatchForElements)
+            {
+                for (auto&& searchResult : finds)
                 {
-                    switch (searchResult.kind())
+                    if (!searchResult.result().empty())
                     {
-                        case pchealth::windows::search::SearchResultKind::Directory:
-                    {
-                            AddNewFolder(searchResult.result());
-                            break;
-                        }
-                        case pchealth::windows::search::SearchResultKind::File:
-                    {
-                            AddNewFile(searchResult.result());
-                            break;
-                        }
-                        case pchealth::windows::search::SearchResultKind::Application:
-                    {
-                            AddNewApplication(searchResult.result());
-                            break;
+                        switch (searchResult.kind())
+                        {
+                            case pchealth::windows::search::SearchResultKind::Directory:
+                            {
+                                DispatcherQueue().TryEnqueue([this, result = searchResult.result()]()
+                                {
+                                    AddNewFolder(result);
+                                });
+                                break;
+                            }
+                            case pchealth::windows::search::SearchResultKind::File:
+                            {
+                                DispatcherQueue().TryEnqueue([this, result = searchResult.result()]()
+                                {
+                                    AddNewFile(result);
+                                });
+                                break;
+                            }
+                            case pchealth::windows::search::SearchResultKind::Application:
+                            {
+                                DispatcherQueue().TryEnqueue([this, result = searchResult.result()]()
+                                {
+                                    AddNewApplication(result);
+                                });
+                                break;
+                            }
                         }
                     }
                 }
-                catch (winrt::hresult_error e)
+            }
+            else
+            {
+                DispatcherQueue().TryEnqueue([this, update, results = std::move(finds)]()
                 {
-                    OutputDebug(std::format(L"Failed to add '{}' ({}): {}", searchResult.result(), static_cast<int32_t>(searchResult.kind()), std::wstring(e.message())));
-                }
-                catch (...)
-                {
-                    OutputDebug(std::format(L"Unspecified error ('{}').", searchResult.result()));
-                }
-            });
+                    for (auto&& searchResult : results)
+                    {
+                        if (!searchResult.result().empty())
+                        {
+                            switch (searchResult.kind())
+                            {
+                                case pchealth::windows::search::SearchResultKind::Directory:
+                                {
+                                    AddNewFolder(searchResult.result());
+                                    break;
+                                }
+                                case pchealth::windows::search::SearchResultKind::File:
+                                {
+                                    AddNewFile(searchResult.result());
+                                    break;
+                                }
+                                case pchealth::windows::search::SearchResultKind::Application:
+                                {
+                                    AddNewApplication(searchResult.result());
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                });
+            }
         }
     }
+}
 
-    void SystemSearchViewer::AddNewFile(const std::wstring& path)
+winrt::Windows::Foundation::IAsyncAction SystemSearchViewer::AddNewFile(std::wstring path)
+{
+    FileInfoViewModel viewModel{};
+    viewModel.Kind(static_cast<int32_t>(pchealth::windows::search::SearchResultKind::File));
+
+    try
     {
-        try
+        auto&& storageFile = co_await winrt::Windows::Storage::StorageFile::GetFileFromPathAsync(path);
+
+        winrt::hstring name = storageFile.Name();
+        auto&& displayType = storageFile.DisplayType();
+        auto&& storageFilePath = storageFile.Path();
+
+        viewModel.Name(name);
+        viewModel.Path(storageFilePath);
+        viewModel.Type(displayType);
+
+        if (_loadThumbnails)
         {
-            auto&& storageFile = winrt::Windows::Storage::StorageFile::GetFileFromPathAsync(path).get();
-            auto&& thumbnail = storageFile.GetThumbnailAsync(winrt::Windows::Storage::FileProperties::ThumbnailMode::SingleItem).get();
-
-            DispatcherQueue().TryEnqueue([this, thumbnail, name = storageFile.Name(), path = storageFile.Path(), displayType = storageFile.DisplayType(), count = ++searchFileCount]()
+            try
             {
-                FileInfoViewModel viewModel{};
-                viewModel.Kind(static_cast<int32_t>(pchealth::windows::search::SearchResultKind::File));
-                viewModel.Name(name);
-                viewModel.Path(path);
-                viewModel.Type(displayType);
-
+                auto&& thumbnail = co_await storageFile.GetScaledImageAsThumbnailAsync(storage::FileProperties::ThumbnailMode::SingleItem, 50, storage::FileProperties::ThumbnailOptions::ReturnOnlyIfCached);
                 xaml::Media::Imaging::BitmapImage img{};
+                img.DecodePixelHeight(50);
                 img.SetSourceAsync(thumbnail);
                 viewModel.Thumbnail(img);
-
-                _searchResults.InsertAt(0, viewModel);
-
-                SearchFileCountTextBlock().Text(winrt::to_hstring(count));
-            });
+            }
+            catch (winrt::hresult_error& err)
+            {
+                OutputDebug(std::format(L"[SystemSearchViewer] Failed to get file thumbnail: {}\n\t({})", path, std::wstring(err.message())));
+            }
         }
-        catch (winrt::hresult_error& err)
-        {
-            OutputDebug(std::format(L"Failed to get thumbnail for '{}': {}", path, std::wstring(err.message())));
 
-            DispatcherQueue().TryEnqueue([this, path, count = ++searchFileCount]()
+        _searchResults.InsertAt(0, viewModel);
+
+        SearchFileCountTextBlock().Text(winrt::to_hstring(searchFileCount.fetch_add(1)));
+    }
+    catch (winrt::hresult_error& err)
+    {
+        OutputDebug(std::format(L"[SystemSearchViewer] Failed to get file from path: {}", path, std::wstring(err.message())));
+
+        std::filesystem::path filePath{ path };
+        viewModel.Name(filePath.filename().wstring());
+        viewModel.Path(filePath.wstring());
+        viewModel.Type(L"File");
+
+        _searchResults.InsertAt(0, viewModel);
+
+        SearchFileCountTextBlock().Text(winrt::to_hstring(searchFileCount.fetch_add(1)));
+    }   
+}
+
+winrt::Windows::Foundation::IAsyncAction SystemSearchViewer::AddNewFolder(std::wstring path)
+{
+    FileInfoViewModel viewModel{};
+    viewModel.Kind(static_cast<int32_t>(pchealth::windows::search::SearchResultKind::Directory));
+    viewModel.Type(L"Directory");
+    viewModel.IsDirectory(true);
+
+    try
+    {
+        auto&& storageFolder = co_await winrt::Windows::Storage::StorageFolder::GetFolderFromPathAsync(path);
+        viewModel.Name(storageFolder.Name());
+        viewModel.Path(storageFolder.Path());
+
+        if (_loadThumbnails)
+        {
+            try
             {
-                std::filesystem::path filePath{ path };
-                FileInfoViewModel viewModel{};
-                viewModel.Kind(static_cast<int32_t>(pchealth::windows::search::SearchResultKind::File));
-                viewModel.Name(filePath.filename().wstring());
-                viewModel.Path(path);
-                viewModel.Type(L"File");
-
-                _searchResults.InsertAt(0, viewModel);
-
-                SearchFileCountTextBlock().Text(winrt::to_hstring(count));
-            });
-        }   
-    }
-
-    void SystemSearchViewer::AddNewFolder(const std::wstring& path)
-    {
-        auto&& storageFolder = winrt::Windows::Storage::StorageFolder::GetFolderFromPathAsync(path).get();
-        auto&& thumbnail = storageFolder.GetThumbnailAsync(winrt::Windows::Storage::FileProperties::ThumbnailMode::SingleItem).get();
-        DispatcherQueue().TryEnqueue([this, thumbnail, name = storageFolder.Name(), path = storageFolder.Path(), count = ++searchFolderCount]()
-        {
-            FileInfoViewModel viewModel{};
-            viewModel.Kind(static_cast<int32_t>(pchealth::windows::search::SearchResultKind::Directory));
-            viewModel.Name(name);
-            viewModel.Path(path);
-            viewModel.Type(L"Directory");
-            viewModel.IsDirectory(true);
-
-            xaml::Media::Imaging::BitmapImage img{};
-            img.SetSourceAsync(thumbnail);
-            viewModel.Thumbnail(img);
-
-            _searchResults.InsertAt(0, viewModel);
-
-            SearchFolderCountTextBlock().Text(winrt::to_hstring(count));
-        });
-    }
-
-    void SystemSearchViewer::AddNewApplication(const std::wstring& name)
-    {
-        DispatcherQueue().TryEnqueue([this, name, count = ++searchApplicationCount]()
-        {
-            FileInfoViewModel viewModel{};
-            viewModel.Kind(static_cast<int32_t>(pchealth::windows::search::SearchResultKind::Application));
-            viewModel.Name(name);
-            viewModel.Path(L"");
-            viewModel.Type(L"Application");
-            viewModel.IsApplication(true);
-
-            _searchResults.InsertAt(0, viewModel);
-
-            SearchApplicationCountTextBlock().Text(winrt::to_hstring(count));
-        });
-    }
-
-    void SystemSearchViewer::SaveControl()
-    {
-        pchealth::storage::LocalSettings settings{ winrt::Windows::Storage::ApplicationData::Current().LocalSettings() };
-        settings.openOrCreateAndMoveTo(L"SystemSearchViewer");
-        settings.saveList(L"History", searchHistory);
-    }
-
-    void SystemSearchViewer::GoToVisualState(bool& b, const winrt::hstring& stateA, const winrt::hstring& stateB)
-    {
-        xaml::VisualStateManager::GoToState(*this, 
-            b ? stateA : stateB,
-            true);
-        b = !b;
-    }
-
-    void SystemSearchViewer::FilterSearch(std::wstring queryText)
-    {
-        _filterResults.Clear();
-        SearchResultsListView().ItemsSource(_filterResults);
-        xaml::VisualStateManager::GoToState(*this, L"FilterSearch", true);
-        try
-        {
-            std::wregex re{ queryText, std::regex_constants::icase | std::regex_constants::egrep };
-
-            pchealth::windows::search::SearchResultKind kind = pchealth::windows::search::SearchResultKind::None;
-            if (queryText.size() >= 2)
+                auto&& thumbnail = co_await storageFolder.GetScaledImageAsThumbnailAsync(storage::FileProperties::ThumbnailMode::SingleItem, 50, storage::FileProperties::ThumbnailOptions::ReturnOnlyIfCached);
+                xaml::Media::Imaging::BitmapImage img{};
+                img.SetSourceAsync(thumbnail);
+                img.DecodePixelHeight(50);
+                viewModel.Thumbnail(img);
+            }
+            catch (const winrt::hresult_error& error)
             {
-                std::array<std::pair<std::wstring, pchealth::windows::search::SearchResultKind>, 3> array
-                {
-                    std::make_pair(L"a:", pchealth::windows::search::SearchResultKind::Application),
-                    std::make_pair(L"d:", pchealth::windows::search::SearchResultKind::Directory), 
-                    std::make_pair(L"f:", pchealth::windows::search::SearchResultKind::File) 
-                };
-                for (size_t i = 0; i < array.size(); i++)
-                {
-                    if (queryText.starts_with(array[i].first))
-                    { 
-                        kind = array[i].second;
-                        if (queryText.size() > 2)
-                        {
-                            queryText = queryText.substr(2);
-                        }
-                        else
-                        {
-                            queryText = L"";
-                        }
-                        break;
+                OutputDebug(std::format(L"[SystemSearchViewer] Failed to get folder thumbnail: {}\n\t({}).", path, std::wstring(error.message())));
+            }
+        }
+
+        _searchResults.InsertAt(0, viewModel);
+
+        SearchFolderCountTextBlock().Text(winrt::to_hstring(searchFolderCount.fetch_add(1)));
+    }
+    catch (const winrt::hresult_error& error)
+    {
+        OUTPUT_DEBUG(std::format(L"[SystemSearchViewer] Failed to get folder from path: {}", std::wstring(error.message())));
+
+        std::filesystem::path filePath{ path };
+        viewModel.Name(filePath.filename().wstring());
+        viewModel.Path(filePath.wstring());
+
+        _searchResults.InsertAt(0, viewModel);
+
+        SearchFolderCountTextBlock().Text(winrt::to_hstring(searchFolderCount.fetch_add(1)));
+    }
+}
+
+void SystemSearchViewer::AddNewApplication(const std::wstring& name)
+{
+    FileInfoViewModel viewModel{};
+    viewModel.Kind(static_cast<int32_t>(pchealth::windows::search::SearchResultKind::Application));
+    viewModel.Name(name);
+    viewModel.Path(L"");
+    viewModel.Type(L"Application");
+    viewModel.IsApplication(true);
+
+    _searchResults.InsertAt(0, viewModel);
+
+    SearchApplicationCountTextBlock().Text(winrt::to_hstring(searchApplicationCount.fetch_add(1)));
+}
+
+void SystemSearchViewer::SaveControl()
+{
+    pchealth::storage::LocalSettings settings{ winrt::Windows::Storage::ApplicationData::Current().LocalSettings() };
+    settings.openOrCreateAndMoveTo(L"SystemSearchViewer");
+    settings.saveList(L"History", searchHistory);
+}
+
+void SystemSearchViewer::FilterSearch(std::wstring queryText)
+{
+    _filterResults.Clear();
+    SearchResultsListView().ItemsSource(_filterResults);
+    visualStateManager.goToState(SystemSearchViewerStates::FilterSearchState);
+    try
+    {
+        std::wregex re{ queryText, std::regex_constants::icase | std::regex_constants::egrep };
+
+        pchealth::windows::search::SearchResultKind kind = pchealth::windows::search::SearchResultKind::None;
+        if (queryText.size() >= 2)
+        {
+            std::array<std::pair<std::wstring, pchealth::windows::search::SearchResultKind>, 3> array
+            {
+                std::make_pair(L"a:", pchealth::windows::search::SearchResultKind::Application),
+                std::make_pair(L"d:", pchealth::windows::search::SearchResultKind::Directory), 
+                std::make_pair(L"f:", pchealth::windows::search::SearchResultKind::File) 
+            };
+            for (size_t i = 0; i < array.size(); i++)
+            {
+                if (queryText.starts_with(array[i].first))
+                { 
+                    kind = array[i].second;
+                    if (queryText.size() > 2)
+                    {
+                        queryText = queryText.substr(2);
                     }
-                }
-            }
-
-            for (auto&& entry : _searchResults)
-            {
-                auto&& item = entry.as<FileInfoViewModel>();
-                auto itemName = std::wstring(item.Name());
-                if ((item.Kind() == static_cast<int32_t>(kind) || kind == pchealth::windows::search::SearchResultKind::None) 
-                    && (queryText.empty() || std::regex_search(itemName, re)))
-                {
-                    _filterResults.Append(item);
+                    else
+                    {
+                        queryText = L"";
+                    }
+                    break;
                 }
             }
         }
-        catch (std::regex_error& ex)
+
+        for (auto&& entry : _searchResults)
         {
-            OutputDebug(std::format("Filter search failed (regex ?): {}.", ex.what()));
-            FilterSearchTextBlock().Text(winrt::to_hstring(ex.what()));
+            auto&& item = entry.as<FileInfoViewModel>();
+            auto itemName = std::wstring(item.Name());
+            if ((item.Kind() == static_cast<int32_t>(kind) || kind == pchealth::windows::search::SearchResultKind::None) 
+                && (queryText.empty() || std::regex_search(itemName, re)))
+            {
+                _filterResults.Append(item);
+            }
         }
     }
+    catch (std::regex_error& ex)
+    {
+        OutputDebug(std::format("Filter search failed (regex ?): {}.", ex.what()));
+        FilterSearchTextBlock().Text(winrt::to_hstring(ex.what()));
+    }
+}
+
+void SystemSearchViewer::AddMessage(winrt::hstring message, int32_t level)
+{
+    xaml::Controls::InfoBar infoBar{};
+    infoBar.Title(message);
+    infoBar.IsOpen(true);
+    infoBar.Severity(static_cast<xaml::Controls::InfoBarSeverity>(level));
+    infoBar.Closed([this, infoBar](auto&&, auto&&)
+    {
+        uint32_t index = 0;
+        if (InfoBarList().Children().IndexOf(infoBar, index))
+        {
+            InfoBarList().Children().RemoveAt(index);
+        }
+    });
+    InfoBarList().Children().Append(infoBar);
 }

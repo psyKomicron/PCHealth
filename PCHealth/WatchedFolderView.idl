@@ -7,6 +7,11 @@ namespace PCHealth
         WatchedFolderView(String folderPath);
         
         String FolderPath;
+        String FolderName;
+        String FolderSize;
+        UInt32 ItemCount;
+        UInt32 FolderCount;
+        Boolean IsFavorite;
         Windows.Foundation.Collections.IObservableVector<String> Items{ get; };
     }
 }

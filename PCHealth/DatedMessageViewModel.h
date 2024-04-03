@@ -14,6 +14,7 @@ namespace winrt::PCHealth::implementation
         {
             timestamp = winrt::clock::from_sys(std::chrono::system_clock::now());
         };
+
         DatedMessageViewModel(const winrt::Windows::Foundation::DateTime& time)
         {
             timestamp = time;

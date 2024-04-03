@@ -1,76 +1,128 @@
 #include "pch.h"
-#include "Directory.h"
+#include "Directory.hpp"
+
+#include "utilities.h"
+
+#include "shlwapi.h"
 
 #include <functional>
 
 using HandlePtr = std::unique_ptr<void, std::function<bool(HANDLE)>>;
 
-namespace pchealth::filesystem
+using namespace pchealth::filesystem;
+
+
+std::optional<Directory> pchealth::filesystem::Directory::tryCreateDirectory(const std::wstring& wstring)
 {
-    Directory::Directory(const std::wstring& path)
+    auto path = std::filesystem::path{ wstring };
+    if (wstring.size() >= 3)
     {
-        dirPath = std::filesystem::path(path);
-    }
-
-    std::vector<std::pair<std::filesystem::path, bool>> Directory::enumerate(const std::filesystem::path& subFolder)
-    {
-        auto&& entries = std::vector<std::pair<std::filesystem::path, bool>>();
-
-        std::filesystem::path path{ dirPath };
-        if (!subFolder.empty())
+        if (!pathFileExists(path))
         {
-            path /= subFolder;
-        }
+            OUTPUT_DEBUG(L"[Directory] Path doesn't exists, parsing to find valid path.");
 
-        WIN32_FIND_DATA findData{};
-        HANDLE findHandle = FindFirstFile((path / L"*").c_str(), &findData);
-        if (findHandle != INVALID_HANDLE_VALUE)
-        {
-            HandlePtr findHandlePtr{ findHandle, FindClose };
-            do
+            path.remove_filename();
+            while(!pathFileExists(path))
             {
-                std::wstring fileName = std::wstring(findData.cFileName);
-                if (fileName != L"." && fileName != L"..")
-                {
-                    std::filesystem::path filePath{ path };
-                    filePath /= fileName;
-                    bool isDirectory = (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
-                    auto&& pair = std::make_pair(filePath, isDirectory);
-                    entries.push_back(pair);
-                }
-            } while (FindNextFile(findHandle, &findData));
+                path = path.parent_path();
+            }
+        
+            OUTPUT_DEBUG(std::format(L"[Directory] Valid path: {}", path.wstring()));
         }
 
-        return entries;
+        auto&& dir = Directory();
+        dir._path = path;
+        return dir;
     }
 
-    std::vector<std::pair<std::filesystem::path, bool>> Directory::find(const std::wregex& query, const std::filesystem::path& subFolder)
+    return std::optional<Directory>();
+}
+
+
+Directory::Directory(const std::wstring& path)
+{
+    _path = std::filesystem::path(path);
+}
+
+std::filesystem::path Directory::path() const
+{
+    return _path;
+}
+
+bool Directory::exists() const
+{
+    return pathFileExists(_path);
+}
+
+std::vector<std::pair<std::filesystem::path, bool>> Directory::enumerate(const std::filesystem::path& subFolder)
+{
+    auto&& entries = std::vector<std::pair<std::filesystem::path, bool>>();
+
+    std::filesystem::path path{ _path };
+    if (!subFolder.empty())
     {
-        std::vector<std::pair<std::filesystem::path, bool>> results{};
-
-        std::filesystem::path path{ dirPath };
-        if (!subFolder.empty())
-        {
-            path /= subFolder;
-        }
-
-        WIN32_FIND_DATA findData{};
-        HANDLE findHandle = FindFirstFile((path / L"*").c_str(), &findData);
-        if (findHandle != INVALID_HANDLE_VALUE)
-        {
-            HandlePtr findHandlePtr{ findHandle, FindClose };
-            do
-            {
-                std::wstring fileName = std::wstring(findData.cFileName);
-                if (fileName != L"." && fileName != L".." && std::regex_search(fileName, query))
-                {
-                    std::filesystem::path filePath = path / fileName;
-                    bool isDirectory = findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
-                    results.push_back(std::make_pair(filePath, isDirectory));
-                }
-            } while (FindNextFile(findHandle, &findData));
-        }
-
-        return results;
+        path /= subFolder;
     }
+
+    WIN32_FIND_DATA findData{};
+    HANDLE findHandle = FindFirstFile((path / L"*").c_str(), &findData);
+    if (findHandle != INVALID_HANDLE_VALUE)
+    {
+        HandlePtr findHandlePtr{ findHandle, FindClose };
+        do
+        {
+            std::wstring fileName = std::wstring(findData.cFileName);
+
+            if (fileName != L"." && fileName != L"..")
+            {
+                std::filesystem::path filePath{ path };
+                filePath /= fileName;
+
+                bool isDirectory = (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
+
+                auto&& pair = std::make_pair(filePath, isDirectory);
+                entries.push_back(pair);
+            }
+        } while (FindNextFile(findHandle, &findData));
+    }
+
+    return entries;
+}
+
+std::vector<std::pair<std::filesystem::path, bool>> Directory::find(const std::wregex& query, const std::filesystem::path& subFolder)
+{
+    std::vector<std::pair<std::filesystem::path, bool>> results{};
+
+    std::filesystem::path path{ _path };
+    if (!subFolder.empty())
+    {
+        path /= subFolder;
+    }
+
+    WIN32_FIND_DATA findData{};
+    HANDLE findHandle = FindFirstFile((path / L"*").c_str(), &findData);
+    if (findHandle != INVALID_HANDLE_VALUE)
+    {
+        HandlePtr findHandlePtr{ findHandle, FindClose };
+        do
+        {
+            std::wstring fileName = std::wstring(findData.cFileName);
+                
+            if (fileName != L"." && fileName != L".." && std::regex_search(fileName, query))
+            {
+                std::filesystem::path filePath = path / fileName;
+                bool isDirectory = findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
+                results.push_back(std::make_pair(filePath, isDirectory));
+            }
+        } 
+        while (FindNextFile(findHandle, &findData));
+    }
+
+    return results;
+}
+
+
+bool pchealth::filesystem::Directory::pathFileExists(const std::filesystem::path& path)
+{
+    return PathFileExistsW(path.wstring().c_str());
 }

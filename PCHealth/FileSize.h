@@ -1,4 +1,4 @@
-namespace Common
+namespace pchealth::filesystem
 {
     class FileSize
     {

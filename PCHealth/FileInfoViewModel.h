@@ -13,17 +13,26 @@ namespace winrt::PCHealth::implementation
 
         winrt::hstring Name() const;
         void Name(const winrt::hstring& value);
+
         winrt::hstring Path() const;
         void Path(const winrt::hstring& value);
+        
         winrt::hstring Type() const;
         void Type(const winrt::hstring& value);
+        
         bool IsDirectory() const;
         void IsDirectory(const bool& value);
+        
         bool IsApplication() const;
         void IsApplication(const bool& value);
+
+        bool NotIsApplication() const;
+        
         bool IsFileSystemEntry() const;
+        
         winrt::Microsoft::UI::Xaml::Media::Imaging::BitmapImage Thumbnail() const;
         void Thumbnail(const winrt::Microsoft::UI::Xaml::Media::Imaging::BitmapImage& value);
+        
         int32_t Kind() const;
         void Kind(const int32_t value);
 

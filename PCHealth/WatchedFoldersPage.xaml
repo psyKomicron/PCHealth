@@ -35,10 +35,8 @@
         <ListView x:Name="WatchedFoldersListView" SelectionMode="None" Grid.Row="1" Margin="0,0,0,43"/>
 
         <Grid
-            Margin="0,0,0,5"
             Padding="5,3,7,3"
             Grid.Row="1" 
-            CornerRadius="{StaticResource OverlayCornerRadius}"
             Background="{ThemeResource SolidBackgroundFillColorQuarternaryBrush}" 
             BorderBrush="{ThemeResource ControlElevationBorderBrush}"
             BorderThickness="1"
@@ -145,9 +143,10 @@
             </StackPanel>
         </Grid>
 
-        <ContentDialog x:Name="FolderAddContentDialog" Title="Add new folder" PrimaryButtonText="Add" SecondaryButtonText="Cancel">
-            <StackPanel HorizontalAlignment="Stretch" Spacing="7">
-                <TextBox x:Name="FolderAddContentDialogTextBox" TextWrapping="Wrap"/>
+        <ContentDialog x:Name="FolderAddContentDialog" Title="Add new folder" PrimaryButtonText="Add" SecondaryButtonText="Cancel" DefaultButton="Primary" IsTabStop="False">
+            <StackPanel HorizontalAlignment="Stretch" Spacing="7" Orientation="Vertical">
+                <TextBox x:Name="FolderAddContentDialogTextBox" TextWrapping="Wrap" TextChanged="FolderAddContentDialogTextBox_TextChanged" PreviewKeyDown="FolderAddContentDialog_PreviewKeyDown" IsTabStop="True"/>
+                <GridView x:Name="SuggestionGridView"/>
             </StackPanel>
         </ContentDialog>
     </Grid>

@@ -57,7 +57,7 @@ namespace winrt::PCHealth::implementation
     void DriveView::RootGrid_Loading(winrt::Microsoft::UI::Xaml::FrameworkElement const&, winrt::Windows::Foundation::IInspectable const&)
     {
         driveInfo = pchealth::filesystem::DriveInfo(std::wstring(driveName.c_str()));
-        FreeDiskSpaceTextBlock().Text(Common::FileSize(driveInfo.totalUsedSpace()).ToString());
+        FreeDiskSpaceTextBlock().Text(pchealth::filesystem::FileSize(driveInfo.totalUsedSpace()).ToString());
     }
 
     winrt::Windows::Foundation::IAsyncAction DriveView::ExtensionsPivotContentGrid_Loading(winrt::Microsoft::UI::Xaml::FrameworkElement const&, winrt::Windows::Foundation::IInspectable const&)
@@ -237,7 +237,7 @@ namespace winrt::PCHealth::implementation
                     case winrt::Windows::Storage::KnownFolderId::CurrentAppMods:
                     break;*/
             }
-            tag.Text(Common::FileSize(std::get<0>(sizes[i])).ToString());
+            tag.Text(pchealth::filesystem::FileSize(std::get<0>(sizes[i])).ToString());
         }
 
         if (offset < 1)

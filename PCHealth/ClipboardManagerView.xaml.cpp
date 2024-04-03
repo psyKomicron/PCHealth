@@ -46,7 +46,7 @@ namespace winrt::PCHealth::implementation
     {
         co_await winrt::resume_background();
 
-        if (winrt::Windows::Storage::ApplicationData::Current().LocalSettings().Containers().HasKey(L"ClipboardTriggers"))
+        /*if (winrt::Windows::Storage::ApplicationData::Current().LocalSettings().Containers().HasKey(L"ClipboardTriggers"))
         {
             auto&& clipboardTriggers = pchealth::storage::LocalSettings(winrt::Windows::Storage::ApplicationData::Current().LocalSettings());
             auto&& objectList = clipboardTriggers.restoreObjectList(L"ClipboardTriggers");
@@ -63,7 +63,7 @@ namespace winrt::PCHealth::implementation
 
                 _formats.Append(trigger);
             }
-        }
+        }*/
     }
 
     winrt::Windows::Foundation::IAsyncAction ClipboardManagerView::ClipboardListeningToggleSwitch_Toggled(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)

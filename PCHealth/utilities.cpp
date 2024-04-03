@@ -15,3 +15,8 @@ uint64_t pchealth::utilities::convert(const uint32_t& high, const uint32_t& low)
 {
     return (static_cast<uint64_t>(high) << 32) | low;
 }
+
+pchealth::storage::LocalSettings pchealth::utilities::getLocalSettings()
+{
+    return pchealth::storage::LocalSettings(winrt::Windows::Storage::ApplicationData::Current().LocalSettings());
+}

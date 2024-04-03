@@ -110,9 +110,7 @@ namespace pchealth::filesystem
                 // 3- Delete the now empty directories.
                 if ((findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 1)
                 {
-                    std::wstring filePath = std::wstring(findData.cFileName);
-                    directoryPathes.push_back(filePath);
-                    
+                    directoryPathes.push_back(filePath);   
                 }
                 else if (filePath != L"." && filePath != L"..")
                 {

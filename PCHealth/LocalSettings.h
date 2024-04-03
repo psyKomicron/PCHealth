@@ -1,4 +1,6 @@
 #pragma once
+#include "CompositeSetting.hpp"
+
 namespace pchealth::storage
 {
     class LocalSettings
@@ -17,18 +19,56 @@ namespace pchealth::storage
         
         void saveObject(const winrt::hstring& key, const std::map<winrt::hstring, winrt::Windows::Foundation::IInspectable>& objectAsMap) const;
         
-        std::map<winrt::hstring, std::map<winrt::hstring, winrt::Windows::Foundation::IInspectable>> restoreObjectList(const winrt::hstring& key) const;
+        std::map<winrt::hstring, CompositeSetting> restoreObjectList(const winrt::hstring& key = {}) const;
         
         void openOrCreateAndMoveTo(const winrt::hstring& key);
 
         std::optional<winrt::Windows::Storage::ApplicationDataContainer> tryLookup(const winrt::hstring& key);
 
-    public:
+        bool moveTo(const winrt::hstring& key);
+
+        void append(const winrt::hstring& key, const winrt::Windows::Storage::ApplicationDataCompositeValue& value);
+
+        winrt::Windows::Storage::ApplicationDataCompositeValue getComposite();
+
+        bool contains(const winrt::hstring& key);
+
+        void clear(const winrt::hstring& key = {});
+
+
+        template <typename T>
+        std::optional<T> tryLookupValue(const winrt::hstring& key)
+        {
+            auto container = localSettings.Values().TryLookup(key);
+            if (container != nullptr)
+            {
+                return container.as<T>();
+            }
+            else
+            {
+                return std::optional<T>();
+            }
+        }
+
+        template <>
+        std::optional<CompositeSetting> tryLookupValue(const winrt::hstring& key)
+        {
+            auto containerOpt = tryLookupValue<winrt::Windows::Storage::ApplicationDataCompositeValue>(key);
+            if (containerOpt.has_value())
+            {
+                return CompositeSetting(containerOpt.value());
+            }
+            else
+            {
+                return {};
+            }
+        }
+
         template <typename T>
         std::optional<T> tryLookup(const winrt::hstring& key)
         {
             auto container = localSettings.Containers().TryLookup(key);
-            if (container.Values().Size() > 0)
+            if (container != nullptr && container.Values().Size() > 0)
             {
                 return std::optional<T>(container.as<T>());
             }
@@ -60,8 +100,10 @@ namespace pchealth::storage
     private:
         winrt::Windows::Storage::ApplicationDataContainer localSettings{ nullptr };
 
-    private:
+
         winrt::Windows::Storage::ApplicationDataContainer createContainer(const winrt::hstring& key) const;
+        void printContainer(const winrt::Windows::Storage::ApplicationDataContainer& container) const;
+        winrt::hstring hash(const winrt::hstring& key);
     };
 }
 

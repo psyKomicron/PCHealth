@@ -11,6 +11,7 @@ namespace PCHealth
         String Type;
         Boolean IsDirectory;
         Boolean IsApplication;
+        Boolean NotIsApplication{ get; };
         Boolean IsFileSystemEntry{ get; };
         Microsoft.UI.Xaml.Media.Imaging.BitmapImage Thumbnail;
         Int32 Kind;

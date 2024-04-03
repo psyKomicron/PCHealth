@@ -9,16 +9,23 @@ namespace pchealth::filesystem
     class Directory
     {
     public:
+        static std::optional<Directory> tryCreateDirectory(const std::wstring& wstring);
+
+        Directory() = default;
+
         Directory(const std::wstring& path);
 
-        std::wstring name();
-        std::filesystem::path path();
-        uint64_t size();
+        std::filesystem::path path() const;
+
+        bool exists() const;
 
         std::vector<std::pair<std::filesystem::path, bool>> enumerate(const std::filesystem::path& subFolder = {});
+        
         std::vector<std::pair<std::filesystem::path, bool>> find(const std::wregex& query, const std::filesystem::path& subFolder = {});
 
     private:
-        std::filesystem::path dirPath;
+        std::filesystem::path _path;
+
+        static bool pathFileExists(const std::filesystem::path& path);
     };
 }

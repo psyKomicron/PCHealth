@@ -4,7 +4,7 @@
 #include "DisplayView.g.cpp"
 #endif
 
-#include "DisplayMonitor.h"
+#include "DisplayMonitor.hpp"
 #include "utilities.h"
 
 namespace xaml = winrt::Microsoft::UI::Xaml;

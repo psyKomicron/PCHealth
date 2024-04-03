@@ -7,7 +7,10 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    Loading="Page_Loading">
+    Name="HomePage"
+    NavigationCacheMode="Enabled"
+    Loading="Page_Loading"
+    Loaded="Page_Loaded">
     <ScrollViewer>
         <Grid>
             <Grid.RowDefinitions>
@@ -16,68 +19,164 @@
             </Grid.RowDefinitions>
 
             <!--#region Top menu -->
-            <VariableSizedWrapGrid ItemWidth="120" ItemHeight="90" VerticalAlignment="Stretch" HorizontalAlignment="Center" Orientation="Horizontal" Grid.Row="0">
-                <Grid Style="{StaticResource GridSettingStyle}" Padding="10" CornerRadius="{StaticResource OverlayCornerRadius}" ColumnSpacing="10" Margin="7">
-                    <Button HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                        <Viewbox MaxHeight="30">
-                            <FontIcon Glyph="&#xeda2;" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                        </Viewbox>
-                    </Button>
-                </Grid>
+            <VariableSizedWrapGrid 
+                Grid.Row="0"
+                ItemWidth="170" 
+                ItemHeight="110"
+                VerticalAlignment="Top" 
+                HorizontalAlignment="Center" 
+                Orientation="Horizontal" 
+                VerticalChildrenAlignment="Top"
+                Margin="0,-7,0,0">
+                <VariableSizedWrapGrid.Resources>
+                    <Style TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+                        <Setter Property="CornerRadius" Value="{StaticResource OverlayCornerRadius}"/>
+                        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                        <Setter Property="VerticalAlignment" Value="Stretch"/>
+                        <Setter Property="Margin" Value="10" />
+                    </Style>
+                </VariableSizedWrapGrid.Resources>
+                <Button Click="DrivesPagesButton_Click">
+                    <Viewbox MaxHeight="40">
+                        <FontIcon Glyph="&#xeda2;" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                    </Viewbox>
+                </Button>
+                
+                <Button Click="WatchedFoldersPageButton_Click">
+                    <Viewbox MaxHeight="40">
+                        <FontIcon Glyph="&#xf12b;" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                    </Viewbox>
+                </Button>
+                
+                <Button Click="ClipboardManagerPageButton_Click">
+                    <Viewbox MaxHeight="40">
+                        <FontIcon Glyph="&#xf0e3;" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                    </Viewbox>
+                </Button>
 
-                <Grid Style="{StaticResource GridSettingStyle}" Padding="10" CornerRadius="{StaticResource OverlayCornerRadius}" ColumnSpacing="10" Margin="7">
-                    <Button HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                        <Viewbox MaxHeight="30">
-                            <FontIcon Glyph="&#xf12b;" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                        </Viewbox>
-                    </Button>
-                </Grid>
-
-                <Grid Style="{StaticResource GridSettingStyle}" Padding="10" CornerRadius="{StaticResource OverlayCornerRadius}" ColumnSpacing="10" Margin="7">
-                    <Button HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                        <Viewbox MaxHeight="30">
-                            <FontIcon Glyph="&#xf0e3;" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                        </Viewbox>
-                    </Button>
-                </Grid>
-
-                <Grid Style="{StaticResource GridSettingStyle}" Padding="10" CornerRadius="{StaticResource OverlayCornerRadius}" ColumnSpacing="10" Margin="7">
-                    <Button HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                        <Viewbox MaxHeight="30">
-                            <FontIcon Glyph="&#xf78b;" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                        </Viewbox>
-                    </Button>
-                </Grid>
+                <Button Click="SearchPageButton_Click">
+                    <Viewbox MaxHeight="40">
+                        <FontIcon Glyph="&#xf78b;" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                    </Viewbox>
+                </Button>
             </VariableSizedWrapGrid>
             <!--#endregion-->
 
             <Grid Grid.Row="1">
+                <Grid.ChildrenTransitions>
+                    <TransitionCollection>
+                        <AddDeleteThemeTransition/>
+                        <RepositionThemeTransition IsStaggeringEnabled="False"/>
+                    </TransitionCollection>
+                </Grid.ChildrenTransitions>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="1*"/>
                     <ColumnDefinition Width="2*"/>
                 </Grid.ColumnDefinitions>
 
                 <!--#region Left panel -->
-                <Grid Grid.Column="0">
+                <VariableSizedWrapGrid x:Name="SecondGrid" ItemWidth="170" ItemHeight="110" Orientation="Horizontal" Grid.Column="0" HorizontalAlignment="Center">
+                    <Grid Style="{StaticResource GridSettingStyle}" Padding="10" CornerRadius="{StaticResource OverlayCornerRadius}" ColumnSpacing="10" Margin="7">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Text="Clear settings" Opacity="0.6"/>
+                        <Viewbox Grid.Row="1" Margin="0,6,0,6">
+                            <Button Style="{StaticResource IconButtonStyle}">
+                                <Grid>
+                                    <FontIcon Glyph="&#xe713;">
+                                        <FontIcon.RenderTransform>
+                                            <TranslateTransform Y="-4" X="-4"/>
+                                        </FontIcon.RenderTransform>
+                                    </FontIcon>
+                                    <FontIcon Glyph="&#xe74d;" FontSize="12">
+                                        <FontIcon.RenderTransform>
+                                            <TranslateTransform Y="9" X="9"/>
+                                        </FontIcon.RenderTransform>
+                                    </FontIcon>
+                                </Grid>
+                            </Button>
+                        </Viewbox>
+                    </Grid>
+                    <Grid Style="{StaticResource GridSettingStyle}" Padding="10" CornerRadius="{StaticResource OverlayCornerRadius}" ColumnSpacing="10" Margin="7">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Text="Clear app data" Opacity="0.6"/>
+                        <Viewbox Grid.Row="1" Margin="0,6,0,6">
+                            <Button Style="{StaticResource IconButtonStyle}">
+                                <Grid>
+                                    <FontIcon Glyph="&#xecaa;">
+                                        <FontIcon.RenderTransform>
+                                            <TranslateTransform Y="-2" X="-2"/>
+                                        </FontIcon.RenderTransform>
+                                    </FontIcon>
+                                    <FontIcon Glyph="&#xe74d;" FontSize="12">
+                                        <FontIcon.RenderTransform>
+                                            <TranslateTransform Y="7" X="7"/>
+                                        </FontIcon.RenderTransform>
+                                    </FontIcon>
+                                </Grid>
+                            </Button>
+                        </Viewbox>
+                    </Grid>
+                </VariableSizedWrapGrid>
+                <!--#endregion-->
+
+                <Grid Grid.Column="1">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-                    <VariableSizedWrapGrid x:Name="SecondGrid" ItemWidth="170" ItemHeight="110" Orientation="Horizontal"/>
-                    
+                    <!--#region Search widget -->
+                    <Grid Grid.Row="0" Style="{StaticResource GridSettingStyle}" Padding="10" CornerRadius="{StaticResource OverlayCornerRadius}" ColumnSpacing="10" Margin="0,7,7,7" VerticalAlignment="Top" MinHeight="207">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock
+                            Grid.Column="1"
+                            Text="Search"
+                            Style="{StaticResource BodyStrongTextBlockStyle}"
+                            Opacity="0.6"/>
+
+                        <Grid Grid.Row="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="SearchBox" MaxHeight="32" MinHeight="30" Margin="4,0,0,0" AcceptsReturn="True" TextChanged="SearchBox_TextChanged"/>
+                            <Button Style="{StaticResource IconButtonStyle}" Grid.Column="1">
+                                <FontIcon Glyph="&#xf78b;"/>
+                            </Button>
+                        </Grid>
+
+                        <ListView x:Name="SearchWidgetHistory" Grid.Row="2"/>
+                    </Grid>
+                    <!--#endregion-->
+
                     <VariableSizedWrapGrid x:Name="FavoritesWatchedFolders" ItemWidth="170" ItemHeight="110" Orientation="Horizontal" Grid.Row="1">
-                        <Grid 
-                            Style="{StaticResource GridSettingStyle}" Padding="10" CornerRadius="{StaticResource OverlayCornerRadius}" ColumnSpacing="10" Margin="7"  VariableSizedWrapGrid.RowSpan="2" VariableSizedWrapGrid.ColumnSpan="1">
+                        <VariableSizedWrapGrid.ChildrenTransitions>
+                            <TransitionCollection>
+                                <AddDeleteThemeTransition/>
+                                <RepositionThemeTransition/>
+                            </TransitionCollection>
+                        </VariableSizedWrapGrid.ChildrenTransitions>
+                        <Grid Style="{StaticResource GridSettingStyle}" Padding="10" CornerRadius="{StaticResource OverlayCornerRadius}" ColumnSpacing="10" Margin="0,7,7,7"  VariableSizedWrapGrid.RowSpan="2" VariableSizedWrapGrid.ColumnSpan="1">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
                             <TextBlock Text="Recycle bin" Opacity="0.6"/>
-                            <Viewbox Grid.Row="1" Margin="0,6,0,6">
+                            <Viewbox x:Name="RecycleBinWidgetViewBox" Grid.Row="1" Margin="0,6,0,6">
                                 <Grid>
-                                    <Ellipse Height="100" Width="100" Grid.RowSpan="2" Stroke="Green" HorizontalAlignment="Stretch" StrokeThickness="7"/>
-                                    <TextBlock Text="120 Gb" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    <ProgressRing x:Name="RecycleBinProgressRing" Height="100" Width="100" Grid.RowSpan="2" Maximum="1" IsIndeterminate="False"/>
+                                    <TextBlock x:Name="RecycleBinSizeTextBlock" Text="120 Gb" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Grid>
                             </Viewbox>
 
@@ -92,36 +191,7 @@
                         </Grid>
                     </VariableSizedWrapGrid>
                 </Grid>
-                <!--#endregion-->
 
-                <!--#region Search widget -->
-                <Grid Grid.Column="1" Style="{StaticResource GridSettingStyle}" Padding="10" CornerRadius="{StaticResource OverlayCornerRadius}" VariableSizedWrapGrid.ColumnSpan="4" VariableSizedWrapGrid.RowSpan="3" ColumnSpacing="10">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <TextBlock Grid.Column="1" Text="Search" Style="{StaticResource BodyStrongTextBlockStyle}" Opacity="0.6"/>
-
-                    <Grid Grid.Row="1">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBox MaxHeight="32" MinHeight="30" Margin="4,0,0,0"/>
-                        <Button Style="{StaticResource IconButtonStyle}" Grid.Column="1">
-                            <FontIcon Glyph="&#xf78b;"/>
-                        </Button>
-                    </Grid>
-
-                    <ListView Grid.Row="2">
-                        <TextBlock Text="9009enklnsdf"/>
-                        <TextBlock Text="9009enklnsdf"/>
-                        <TextBlock Text="9009enklnsdf"/>
-                    </ListView>
-                </Grid>
-                <!--#endregion-->
             </Grid>
             
         </Grid>

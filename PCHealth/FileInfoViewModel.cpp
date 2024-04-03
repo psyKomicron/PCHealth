@@ -56,6 +56,11 @@ namespace winrt::PCHealth::implementation
         _isApplication = value;
     }
 
+    bool FileInfoViewModel::NotIsApplication() const
+    {
+        return !IsApplication();
+    }
+
     bool FileInfoViewModel::IsFileSystemEntry() const
     {
         return _isDirectory || !_isApplication;

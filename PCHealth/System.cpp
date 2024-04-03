@@ -58,7 +58,7 @@ namespace pchealth::windows
         return userName;
     }
 
-    uint64_t System::GetFileSize(const std::wstring& filePath)
+    uint64_t System::getFileSize(const std::wstring& filePath)
     {
         WIN32_FIND_DATA findData{};
         HANDLE findHandle = nullptr;
@@ -79,16 +79,34 @@ namespace pchealth::windows
         return PathFileExists(path.c_str());
     }
 
-    bool System::openExplorer(std::wstring args)
+    void System::openExplorer(std::wstring args)
     {
         STARTUPINFOW info{ sizeof(STARTUPINFOW) };
         PROCESS_INFORMATION processInfo{};
-        std::wstring command = std::format(L"explorer /select,\"{}\"", args);
+        std::wstring command = std::format(LR"(explorer /select,"{}")", args);
         if (CreateProcessW(nullptr, command.data(), nullptr, nullptr, false, DETACHED_PROCESS, nullptr, nullptr, &info, &processInfo))
         {
             CloseHandle(processInfo.hProcess);
             CloseHandle(processInfo.hThread);
-            return true;
+        }
+        else
+        {
+            winrt::throw_last_error();
+        }
+    }
+
+    void System::launch(const std::wstring path)
+    {
+        OUTPUT_DEBUG(L"[System] WARNING! System::launch is not implemented.");
+        return;
+        STARTUPINFOW info{ sizeof(STARTUPINFOW) };
+        PROCESS_INFORMATION processInfo{};
+        std::wstring command = std::format(LR"(&"{}")", path);
+        if (CreateProcessW(path.data(), nullptr, nullptr, nullptr, false, DETACHED_PROCESS, nullptr, nullptr, &info, &processInfo))
+        {
+            CloseHandle(processInfo.hProcess);
+            CloseHandle(processInfo.hThread);
+            OUTPUT_DEBUG(std::format(L"[System] Created process: {}", command));
         }
         else
         {

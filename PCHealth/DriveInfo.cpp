@@ -34,7 +34,7 @@ namespace pchealth::filesystem
         }
     }
 
-    std::vector<DriveInfo> DriveInfo::GetDrives()
+    std::vector<DriveInfo> DriveInfo::getDrives()
     {
         WCHAR drives[512]{};
         WCHAR* pointer = drives;

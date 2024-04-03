@@ -6,10 +6,9 @@
     xmlns:local="using:PCHealth"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    mc:Ignorable="d"
-    Loading="UserControl_Loading">
+    mc:Ignorable="d">
 
-    <Expander HorizontalAlignment="Stretch" CornerRadius="{StaticResource OverlayCornerRadius}" MinHeight="60" HorizontalContentAlignment="Stretch">
+    <Grid>
         <VisualStateManager.VisualStateGroups>
             <VisualStateGroup>
                 <VisualState x:Name="Default"/>
@@ -34,7 +33,6 @@
                             </DoubleAnimation.EasingFunction>
                         </DoubleAnimation>
                     </Storyboard>
-                    
                     <VisualState.Setters>
                         <Setter Target="FilesListView.Visibility" Value="Collapsed"/>
                         <Setter Target="FilesGridView.Visibility" Value="Collapsed"/>
@@ -48,6 +46,7 @@
                     </VisualState.Setters>
                 </VisualState>
             </VisualStateGroup>
+            
             <VisualStateGroup>
                 <VisualState x:Name="ListView"/>
                 <VisualState x:Name="GridView">
@@ -58,107 +57,206 @@
                     </VisualState.Setters>
                 </VisualState>
             </VisualStateGroup>
+            
+            <VisualStateGroup>
+                <VisualState x:Name="NormalView"/>
+                <VisualState x:Name="HomeView">
+                    <VisualState.Setters>
+                        <Setter Target="HomeViewGrid.Visibility" Value="Visible"/>
+                        <Setter Target="NormalViewExpander.Visibility" Value="Collapsed"/>
+                    </VisualState.Setters>
+                </VisualState>
+            </VisualStateGroup>
+
+            <VisualStateGroup>
+                <VisualState x:Name="PointerOff"/>
+                <VisualState x:Name="PointerOn">
+                    <Storyboard>
+                        <DoubleAnimationUsingKeyFrames Storyboard.TargetName="FolderPropertiesPanel" Storyboard.TargetProperty="Opacity">
+                            <DiscreteDoubleKeyFrame KeyTime="0:0:0.0" Value="1"/>
+                            <SplineDoubleKeyFrame KeyTime="0:0:0.83" Value="0"/>
+                        </DoubleAnimationUsingKeyFrames>
+                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="FolderPropertiesPanel" Storyboard.TargetProperty="Visibility">
+                            <DiscreteObjectKeyFrame KeyTime="0:0:0.8" Value="Collapsed"/>
+                            <!--<DiscreteObjectKeyFrame KeyTime="0:0:1.0" Value="Collapsed"/>-->
+                        </ObjectAnimationUsingKeyFrames>
+
+                        <DoubleAnimationUsingKeyFrames Storyboard.TargetName="ThumbnailImage" Storyboard.TargetProperty="Opacity">
+                            <DiscreteDoubleKeyFrame KeyTime="0:0:0" Value="0"/>
+                            <SplineDoubleKeyFrame KeyTime="0:0:0.83" Value="1"/>
+                        </DoubleAnimationUsingKeyFrames>
+                    </Storyboard>
+                </VisualState>
+            </VisualStateGroup>
+
+            <VisualStateGroup>
+                <VisualState x:Name="NonFavorite"/>
+                <VisualState x:Name="Favorite">
+                    <VisualState.Setters>
+                        <Setter Target="FavoriteFontIcon.Glyph" Value="&#xe735;"/>
+                    </VisualState.Setters>
+                </VisualState>
+            </VisualStateGroup>
         </VisualStateManager.VisualStateGroups>
-        
-        <Expander.Header>
+
+        <Expander x:Name="NormalViewExpander" HorizontalAlignment="Stretch" CornerRadius="{StaticResource OverlayCornerRadius}" MinHeight="60" MaxHeight="980" HorizontalContentAlignment="Stretch" Loading="UserControl_Loading">
+            <Expander.Header>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Text="{x:Bind FolderPath, Mode=OneWay}" Grid.Column="0" Style="{StaticResource BodyStrongTextBlockStyle}" VerticalAlignment="Center"/>
+
+                    <TextBlock Text="{x:Bind FolderSize, Mode=OneWay}" Style="{StaticResource BodyStrongTextBlockStyle}" Grid.Column="1" Margin="0,0,10,0" VerticalAlignment="Center"/>
+
+                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                        <Button Style="{StaticResource IconButtonStyle}" Click="FavoriteButton_Click">
+                            <FontIcon x:Name="FavoriteFontIcon" Glyph="&#xe734;"/>
+                        </Button>
+                    </StackPanel>
+                    
+                    <ProgressRing 
+                        x:Name="LoadingProgressRing" 
+                        Grid.Column="3" 
+                        Height="20"
+                        Width="20" 
+                        Maximum="1" 
+                        HorizontalAlignment="Right" 
+                        VerticalAlignment="Center" 
+                        Visibility="Visible"
+                        Margin="0,0,3,0"/>
+
+                    <FontIcon x:Name="ErrorFontIcon" Glyph="&#xe783;" Grid.Column="4" Foreground="{ThemeResource SystemFillColorCaution}" HorizontalAlignment="Right" VerticalAlignment="Center" Visibility="Collapsed" Opacity="0" Margin="3,0,0,0"/>
+                </Grid>
+            </Expander.Header>
             <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
 
-                <TextBlock Text="{x:Bind FolderPath}" Grid.Column="0" Style="{StaticResource BodyStrongTextBlockStyle}" VerticalAlignment="Center"/>
-                <TextBlock x:Name="FolderSizeTextBlock" Style="{StaticResource BodyStrongTextBlockStyle}" Grid.Column="1" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                <Grid x:Name="HeaderGrid" Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
 
-                <ProgressRing 
-                    x:Name="LoadingProgressRing" 
-                    Grid.Column="2" 
-                    Height="20"
-                    Width="20" 
-                    Maximum="1" 
-                    HorizontalAlignment="Right" 
-                    VerticalAlignment="Center" 
-                    Visibility="Visible"
-                    Margin="0,0,3,0"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,15" Grid.Column="2">
+                        <ToggleSwitch x:Name="WatchChangesToggleSwitch" Toggled="WatchChangesToggleSwitch_Toggled"/>
+                        <Slider 
+                            x:Name="ThumbnailSizeSlider" 
+                            ValueChanged="ThumbnailSizeSlider_ValueChanged"
+                            Maximum="300" 
+                            Minimum="80" 
+                            MinWidth="170" 
+                            VerticalAlignment="Center" 
+                            Margin="0,0,6,0" 
+                            Visibility="Collapsed"/>
+                        <ToggleButton 
+                            x:Name="ListViewToggleButton" 
+                            IsChecked="True"
+                            CornerRadius="5,0,0,5" 
+                            ToolTipService.ToolTip="View mode: list" 
+                            Click="ListViewToggleButton_Checked">
+                            <FontIcon Glyph="&#xEA37;" FontSize="16"/>
+                        </ToggleButton>
+                        <ToggleButton 
+                            x:Name="ThumbnailsViewToggleButton" 
+                            CornerRadius="0,5,5,0" 
+                            ToolTipService.ToolTip="View mode: thumbnails" 
+                            Click="ThumbnailsViewToggleButton_Checked">
+                            <FontIcon Glyph="&#xE8B9;" FontSize="16"/>
+                        </ToggleButton>
+                    </StackPanel>
 
-                <FontIcon x:Name="ErrorFontIcon" Glyph="&#xe783;" Grid.Column="3" Foreground="{ThemeResource SystemFillColorCaution}" HorizontalAlignment="Right" VerticalAlignment="Center" Visibility="Collapsed" Opacity="0" Margin="3,0,0,0"/>
+                    <TextBlock Text="Files" Style="{StaticResource TitleTextBlockStyle}" VerticalAlignment="Top" Margin="0,0,0,15"/>
+                </Grid>
+
+                <ListView 
+                    x:Name="FilesListView" 
+                    ItemsSource="{x:Bind Items, Mode=OneWay}" 
+                    Grid.Row="1">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Padding="0,7">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{Binding}" VerticalAlignment="Center"/>
+                                <Button Grid.Column="1" MinHeight="40" MinWidth="40">
+                                    <FontIcon Glyph="&#xE74D;" FontSize="16"/>
+                                </Button>
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+
+                <GridView 
+                    x:Name="FilesGridView" 
+                    Grid.Row="1" 
+                    Visibility="Collapsed"
+                    Loading="FilesGridView_Loading">
+                </GridView>
+
+                <TextBlock x:Name="NoFilesTextBlock" Text="No files" Visibility="Collapsed" x:Load="False" Style="{StaticResource SubheaderTextBlockStyle}" Grid.Row="1"/>
             </Grid>
-        </Expander.Header>
+        </Expander>
 
-        <Grid>
+        <Grid 
+            x:Name="HomeViewGrid" x:Load="False" Loading="HomeViewGrid_Loading" Visibility="Collapsed" Style="{StaticResource GridSettingStyle}" CornerRadius="{StaticResource OverlayCornerRadius}" ColumnSpacing="10" Margin="7" Padding="10,10,10,2" PointerExited="HomeViewGrid_PointerExited">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <Grid x:Name="HeaderGrid" Grid.Row="0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
+            <Image x:Name="ThumbnailImage" Grid.Row="2" Height="110"/>
 
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,15" Grid.Column="2">
-                    <ToggleSwitch x:Name="WatchChangesToggleSwitch" Toggled="WatchChangesToggleSwitch_Toggled"/>
-                    <Slider 
-                        x:Name="ThumbnailSizeSlider" 
-                        ValueChanged="ThumbnailSizeSlider_ValueChanged"
-                        Maximum="300" 
-                        Minimum="80" 
-                        MinWidth="170" 
-                        VerticalAlignment="Center" 
-                        Margin="0,0,6,0" 
-                        Visibility="Collapsed"/>
-                    <ToggleButton 
-                        x:Name="ListViewToggleButton" 
-                        IsChecked="True"
-                        CornerRadius="5,0,0,5" 
-                        ToolTipService.ToolTip="View mode: list" 
-                        Click="ListViewToggleButton_Checked">
-                        <FontIcon Glyph="&#xEA37;" FontSize="16"/>
-                    </ToggleButton>
-                    <ToggleButton 
-                        x:Name="ThumbnailsViewToggleButton" 
-                        CornerRadius="0,5,5,0" 
-                        ToolTipService.ToolTip="View mode: thumbnails" 
-                        Click="ThumbnailsViewToggleButton_Checked">
-                        <FontIcon Glyph="&#xE8B9;" FontSize="16"/>
-                    </ToggleButton>
+            <TextBlock x:Name="FolderNameTextBlock" Text="{x:Bind FolderName}"/>
+            <TextBlock x:Name="FolderPathTextBlock" Text="{x:Bind FolderPath}" Opacity="0.6" FontSize="10" Grid.Row="1"/>
+
+            <StackPanel 
+                x:Name="FolderPropertiesPanel" 
+                Grid.Row="2"
+                Spacing="4" 
+                HorizontalAlignment="Center" 
+                VerticalAlignment="Center" 
+                Margin="0,6,0,6"
+                PointerEntered="HomeViewGrid_PointerEntered">
+
+                <TextBlock Text="{x:Bind FolderSize, Mode=OneWay}" HorizontalAlignment="Center" VerticalAlignment="Top" Style="{StaticResource BodyStrongTextBlockStyle}" FontSize="{StaticResource TitleTextBlockFontSize}"/>
+
+                <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" >
+                    <TextBlock
+                        Text="{x:Bind ItemCount, Mode=OneWay}"
+                        Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                    <TextBlock Text=" files"/>
                 </StackPanel>
 
-                <TextBlock Text="Files" Style="{StaticResource TitleTextBlockStyle}" VerticalAlignment="Top" Margin="0,0,0,15"/>
-            </Grid>
+                <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" >
+                    <TextBlock Text="{x:Bind FolderCount, Mode=OneWay}" Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                    <TextBlock Text=" folders"/>
+                </StackPanel>
+            </StackPanel>
+            
+            <ProgressRing x:Name="HomeViewProgressRing" Height="15" Width="15" Grid.Row="2" VerticalAlignment="Bottom" HorizontalAlignment="Right" IsIndeterminate="True"/>
 
-            <ListView 
-                x:Name="FilesListView" 
-                ItemsSource="{x:Bind Items}" 
-                Grid.Row="1">
-                <ListView.ItemTemplate>
-                    <DataTemplate>
-                        <Grid Padding="0,7">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="{Binding}" VerticalAlignment="Center"/>
-                            <Button Grid.Column="1" MinHeight="40" MinWidth="40">
-                                <FontIcon Glyph="&#xE74D;" FontSize="16"/>
-                            </Button>
-                        </Grid>
-                    </DataTemplate>
-                </ListView.ItemTemplate>
-            </ListView>
-
-            <GridView 
-                x:Name="FilesGridView" 
-                Grid.Row="1" 
-                Visibility="Collapsed"
-                Loading="FilesGridView_Loading">
-            </GridView>
-
-            <TextBlock x:Name="NoFilesTextBlock" Text="No files" Visibility="Collapsed" x:Load="False" Style="{StaticResource SubheaderTextBlockStyle}" Grid.Row="1"/>
+            <StackPanel Grid.Row="3" Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center">
+                <Button Style="{StaticResource IconButtonStyle}">
+                    <FontIcon Glyph="&#xe74d;"/>
+                </Button>
+                <Button Style="{StaticResource IconButtonStyle}">
+                    <FontIcon Glyph="&#xe8da;"/>
+                </Button>
+            </StackPanel>
         </Grid>
-    </Expander>
+    </Grid>
 </UserControl>

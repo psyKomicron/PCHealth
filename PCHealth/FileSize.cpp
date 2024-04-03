@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "FileSize.h"
 
-namespace Common
+namespace pchealth::filesystem
 {
     FileSize::FileSize(const uint64_t& size)
     {

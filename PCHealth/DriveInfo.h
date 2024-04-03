@@ -11,24 +11,31 @@ namespace pchealth::filesystem
     {
     public:
         DriveInfo() = default;
+
         DriveInfo(const std::wstring& driveName);
 
-        static std::vector<DriveInfo> GetDrives();
+        static std::vector<DriveInfo> getDrives();
 
         int64_t capacity() const;
+        
         int64_t totalUsedSpace() const;
+        
         std::wstring name() const;
+        
         DriveTechnology technology() const;
+        
         bool isMainDrive() const;
 
         /**
          * @brief Returns the size in bit of the recycle bin for this drive.
         */
         uint64_t getRecycleBinSize() const;
+        
         /**
          * @brief Tries to find the windows libraries for this drive or user created ones.
         */
         LibraryPathes getLibraries() const;
+        
         /**
          * @brief Computes the size of the files matching the appropriate regex in the map.
          * @param extensionsRegices 

@@ -8,7 +8,13 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     Loading="UserControl_Loading">
-    <Grid Padding="4,20,4,4">
+    
+    <Grid Padding="4,20,4,4" RowSpacing="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
         <VisualStateManager.VisualStateGroups>
             <VisualStateGroup>
@@ -18,15 +24,6 @@
                         <Setter Target="FilterBoxGrid.Visibility" Value="Visible"/>
                         <Setter Target="OpenFilterBoxButtonIcon.Glyph" Value="&#xe70e;"/>
                     </VisualState.Setters>
-                    
-                    <Storyboard>
-                        <DoubleAnimation
-                            Duration="0:0:0.083"
-                            From="0"
-                            To="1"
-                            Storyboard.TargetProperty="Opacity"
-                            Storyboard.TargetName="FilterBoxGrid"/>
-                    </Storyboard>
                 </VisualState>
             </VisualStateGroup>
             
@@ -37,15 +34,6 @@
                         <Setter Target="DropdownStackPanel.Visibility" Value="Visible"/>
                         <!--<Setter Target="DropdownStackPanel.Opacity" Value="1"/>-->
                     </VisualState.Setters>
-
-                    <Storyboard>
-                        <DoubleAnimation
-                            Duration="0:0:0.083"
-                            From="0"
-                            To="1"
-                            Storyboard.TargetProperty="Opacity"
-                            Storyboard.TargetName="DropdownStackPanel"/>
-                    </Storyboard>
                 </VisualState>
             </VisualStateGroup>
 
@@ -55,8 +43,7 @@
                     <VisualState.Setters>
                         <Setter Target="LoadingProgressRing.Maximum" Value="0"/>
                         <Setter Target="LoadingProgressRing.IsIndeterminate" Value="True"/>
-                        <Setter Target="LoadingProgressRing.Visibility" Value="Visible"/>
-                        <Setter Target="RemainingTextBlock.Visibility" Value="Visible"/>
+                        <Setter Target="ProgressControlsGrid.Visibility" Value="Visible"/>
                         <Setter Target="SearchTextBlock.Visibility" Value="Collapsed"/>
                         <Setter Target="SearchTextBlock.Text" Value=""/>
                         <Setter Target="SearchFileCountTextBlock.Text" Value=""/>
@@ -66,44 +53,90 @@
                 </VisualState>
             </VisualStateGroup>
         </VisualStateManager.VisualStateGroups>
-        
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="1*"/>
-            <ColumnDefinition Width="2*"/>
-            <ColumnDefinition Width="1*"/>
-        </Grid.ColumnDefinitions>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
-        <ToggleButton HorizontalAlignment="Right" VerticalAlignment="Top" Click="OpenFilterBoxButton_Click" Margin="0,0,5,0" Style="{StaticResource IconToggleButtonStyle}">
-            <FontIcon x:Name="OpenFilterBoxButtonIcon" Glyph="&#xe70d;" FontSize="16"/>
-        </ToggleButton>
-        <ToggleButton HorizontalAlignment="Left" VerticalAlignment="Top" Click="OpenOptionsButton_Click" Margin="5,0,0,0" Style="{StaticResource IconToggleButtonStyle}" Grid.Column="2">
-            <FontIcon Glyph="&#xe713;" FontSize="16"/>
-        </ToggleButton>
-        
-        <Grid Grid.Column="1">
+
+
+        <Grid Padding="5,0,5,0">
+            <Grid.ChildrenTransitions>
+                <TransitionCollection>
+                    <PopupThemeTransition/>
+                </TransitionCollection>
+            </Grid.ChildrenTransitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="3*"/>
+                <ColumnDefinition Width="1*"/>
+            </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
-            <Grid.ChildrenTransitions>
-                <RepositionThemeTransition/>
-            </Grid.ChildrenTransitions>
 
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-                <AutoSuggestBox x:Name="SearchAutoSuggestBox" HorizontalAlignment="Stretch" VerticalAlignment="Center" QuerySubmitted="AutoSuggestBox_QuerySubmitted"/>
-                <TextBlock x:Name="SearchTextBlock" Grid.Row="1" Foreground="{ThemeResource SystemFillColorCaution}" Visibility="Collapsed"/>
+            <Grid Grid.Row="0" Grid.Column="0" HorizontalAlignment="Left">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="SearchTimestampTextBlock"/>
+                <Grid Grid.Column="1" ColumnSpacing="5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="Files" FontSize="12" Opacity="0.6"/>
+                    <TextBlock x:Name="SearchFileCountTextBlock" Grid.Row="1" Text="0" Margin="1,0,0,0"/>
+
+                    <TextBlock Text="Folders" Grid.Column="1" FontSize="12" Opacity="0.6"/>
+                    <TextBlock x:Name="SearchFolderCountTextBlock" Grid.Row="1" Grid.Column="1" Text="0" Margin="1,0,0,0"/>
+
+                    <TextBlock Text="Applications" Grid.Column="2" FontSize="12" Opacity="0.6"/>
+                    <TextBlock x:Name="SearchApplicationCountTextBlock" Grid.Row="1" Grid.Column="2" Text="0" Margin="1,0,0,0"/>
+                </Grid>
             </Grid>
 
-            <Grid x:Name="FilterBoxGrid" Grid.Row="1" x:Load="False" Visibility="Collapsed" Opacity="0">
+            <!-- Auto suggest box and settings. -->
+            <Grid Grid.Column="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="45"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="45"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <ToggleButton HorizontalAlignment="Right" VerticalAlignment="Top" Click="OpenFilterBoxButton_Click" Margin="0,0,5,0" Style="{StaticResource IconToggleButtonStyle}">
+                    <FontIcon x:Name="OpenFilterBoxButtonIcon" Glyph="&#xe70d;" FontSize="16"/>
+                </ToggleButton>
+
+                <ToggleButton HorizontalAlignment="Left" VerticalAlignment="Top" Click="OpenOptionsButton_Click" Margin="5,0,0,0" Style="{StaticResource IconToggleButtonStyle}" Grid.Column="2">
+                    <FontIcon Glyph="&#xe713;" FontSize="16"/>
+                </ToggleButton>
+
+                <Grid Grid.Column="1">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <AutoSuggestBox 
+                        x:Name="SearchAutoSuggestBox" 
+                        HorizontalAlignment="Stretch" 
+                        VerticalAlignment="Center" 
+                        CharacterSpacing="20"
+                        FontFamily="Consolas"
+                        QuerySubmitted="AutoSuggestBox_QuerySubmitted"/>
+                    <TextBlock x:Name="SearchTextBlock" Grid.Row="1" Foreground="{ThemeResource SystemFillColorCaution}" Visibility="Collapsed"/>
+                </Grid>
+            </Grid>
+
+            <Grid x:Name="FilterBoxGrid" Grid.Row="1" Grid.Column="1" Visibility="Collapsed">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="Auto"/>
@@ -116,11 +149,13 @@
                     Margin="0,7,0,0" 
                     QuerySubmitted="FilterAutoSuggestBox_QuerySubmitted" 
                     TextChanged="FilterAutoSuggestBox_TextChanged" 
-                    BorderThickness="1"/>
-                <TextBlock x:Name="FilterSearchTextBlock" Grid.Row="1" Foreground="{ThemeResource SystemFillColorCaution}"/>
+                    BorderThickness="1"
+                    CharacterSpacing="20"
+                    FontFamily="Consolas"/>
+                <TextBlock x:Name="FilterSearchTextBlock" Grid.Row="1" Foreground="{ThemeResource SystemFillColorCaution}" Visibility="Collapsed"/>
             </Grid>
 
-            <StackPanel x:Name="DropdownStackPanel" Grid.Row="2" Spacing="7" Visibility="Collapsed" Opacity="0" Margin="0,7,0,0">
+            <StackPanel x:Name="DropdownStackPanel" Grid.Row="2" Grid.Column="1" Spacing="7" Visibility="Collapsed" Margin="0,5,0,0">
                 <Grid Style="{StaticResource GridSettingStyle}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -129,14 +164,16 @@
                     <TextBlock Text="Include recycle bin" VerticalAlignment="Center" Style="{StaticResource BaseTextBlockStyle}"/>
                     <ToggleSwitch x:Name="IncludeRecycleBinToggleSwitch" Style="{StaticResource FlippedToggleSwitchStyle}" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                 </Grid>
+                
                 <Grid Style="{StaticResource GridSettingStyle}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="Split query on spaces" VerticalAlignment="Center" Style="{StaticResource BaseTextBlockStyle}"/>
-                    <ToggleSwitch x:Name="SplitQueryOnSpacesToggleSwitch" Style="{StaticResource FlippedToggleSwitchStyle}" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center" IsOn="True" Toggled="SplitQueryOnSpacesToggleSwitch_Toggled"/>
+                    <TextBlock Text="Match file path" VerticalAlignment="Center" Style="{StaticResource BaseTextBlockStyle}"/>
+                    <ToggleSwitch x:Name="MatchFilePathToggleSwitch" Style="{StaticResource FlippedToggleSwitchStyle}" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center" Toggled="MatchFilePathToggleSwitch_Toggled"/>
                 </Grid>
+                
                 <Expander x:Name="ActiveDrivesExpander" Style="{StaticResource ModernExpanderStyle}">
                     <Expander.Header>
                         <Grid>
@@ -148,7 +185,6 @@
                             <ToggleSwitch x:Name="IncludeAllDrivesToggleSwitch" Style="{StaticResource FlippedToggleSwitchStyle}" Grid.Column="1" Toggled="IncludeAllDrivesToggleSwitch_Toggled" VerticalAlignment="Center"/>
                         </Grid>
                     </Expander.Header>
-                    
                     <GridView x:Name="DrivesGridView" SelectionMode="Multiple" ItemsSource="{x:Bind Drives}" IsEnabled="False">
                         <GridView.ItemTemplate>
                             <DataTemplate x:DataType="x:String">
@@ -160,46 +196,46 @@
                     </GridView>
                 </Expander>
             </StackPanel>
-        </Grid>
 
-        <ProgressRing x:Name="LoadingProgressRing" HorizontalAlignment="Left" Grid.Column="2" Height="25" Width="25" Margin="5,0,0,0" Visibility="Collapsed">
-            <ProgressRing.RenderTransform>
-                <TranslateTransform X="50"/>
-            </ProgressRing.RenderTransform>
-        </ProgressRing>
-        <TextBlock x:Name="RemainingTextBlock" HorizontalAlignment="Right" Grid.Column="2" Margin="15,0,0,0" Visibility="Collapsed"/>
-
-        <Grid Grid.Row="1" Grid.ColumnSpan="3">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-            <TextBlock x:Name="SearchTimestampTextBlock"/>
-            <Grid Grid.Column="2" ColumnSpacing="5">
+            <Grid
+                x:Name="ProgressControlsGrid"
+                Visibility="Collapsed"
+                Grid.Column="2"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Center"
+                ColumnSpacing="10">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition/>
-                    <ColumnDefinition/>
-                    <ColumnDefinition/>
+                    <ColumnDefinition Width="50"/>
+                    <ColumnDefinition Width="50"/>
                 </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-                <TextBlock Text="Files" FontSize="12" Opacity="0.6"/>
-                <TextBlock x:Name="SearchFileCountTextBlock" Grid.Row="1" Text="0"/>
-
-                <TextBlock Text="Folders" Grid.Column="1" FontSize="12" Opacity="0.6"/>
-                <TextBlock x:Name="SearchFolderCountTextBlock" Grid.Row="1" Grid.Column="1" Text="0"/>
-
-                <TextBlock Text="Applications" Grid.Column="2" FontSize="12" Opacity="0.6"/>
-                <TextBlock x:Name="SearchApplicationCountTextBlock" Grid.Row="1" Grid.Column="2" Text="0"/>
+                <TextBlock 
+                    x:Name="RemainingTextBlock" 
+                    HorizontalAlignment="Right" 
+                    Grid.Column="0"
+                    Margin="15,0,0,0"
+                    VerticalAlignment="Center"/>
+                <Button Style="{StaticResource IconButtonStyle}" Grid.Column="1" Padding="2" Click="CancelSearchButton_Click">
+                    <Grid>
+                        <ProgressRing 
+                            x:Name="LoadingProgressRing"
+                            Height="30" 
+                            Width="30"/>
+                        <FontIcon Glyph="&#xf78a;" FontSize="12"/>
+                    </Grid>
+                </Button>
             </Grid>
         </Grid>
-        <ListView x:Name="SearchResultsListView" Grid.Row="2" Grid.ColumnSpan="3" Margin="0,10,0,0">
+
+        <ListView 
+            x:Name="SearchResultsListView" 
+            Grid.Row="2"
+            Grid.ColumnSpan="3"
+            IsDoubleTapEnabled="True" 
+            ShowsScrollingPlaceholders="True"
+            DoubleTapped="SearchResultsListView_DoubleTapped">
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="local:FileInfoViewModel">
-                    <Grid Background="{ThemeResource SubtleFillColorTertiaryBrush}" ColumnSpacing="7" RowSpacing="4" Margin="-12,3,-6,3" CornerRadius="{StaticResource ControlCornerRadius}" Padding="5,0">
+                    <Grid ColumnSpacing="7" RowSpacing="4" CornerRadius="{StaticResource ControlCornerRadius}" Padding="5,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="50"/>
                             <ColumnDefinition Width="3*"/>
@@ -211,13 +247,17 @@
                             <RowDefinition Height="30"/>
                         </Grid.RowDefinitions>
 
-                        <Image Source="{x:Bind Thumbnail}" Grid.RowSpan="2" VerticalAlignment="Center" Height="50" Width="50" Stretch="Uniform"/>
+                        <Image Source="{x:Bind Thumbnail}" Grid.RowSpan="2" VerticalAlignment="Center" Height="50" Width="50" Stretch="Uniform" x:Phase="1"/>
                         <TextBlock Text="{x:Bind Name}" Grid.Column="1" VerticalAlignment="Bottom"/>
                         <TextBlock Text="{x:Bind Path}" Grid.Column="1" Grid.Row="1" Opacity="0.7" FontSize="12" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" VerticalAlignment="Top"/>
                         <TextBlock Text="{x:Bind Type}" Grid.Column="2" Grid.RowSpan="2" VerticalAlignment="Center"/>
                         <StackPanel Orientation="Horizontal" Grid.Column="3" Grid.RowSpan="2" Spacing="4" Visibility="{x:Bind IsFileSystemEntry}">
-                            <Button Tag="{x:Bind Path}" ToolTipService.ToolTip="Show in folder" Click="OpenFileExplorerButton_Click">
+                            <Button Tag="{x:Bind Path}" ToolTipService.ToolTip="Show in folder" Click="OpenFileExplorerButton_Click" Visibility="{x:Bind NotIsApplication}">
                                 <FontIcon Glyph="&#xe8da;"/>
+                            </Button>
+                            
+                            <Button Tag="{x:Bind Path}" ToolTipService.ToolTip="Open app" Click="OpenFileExplorerButton_Click" Visibility="{x:Bind IsApplication}">
+                                <FontIcon Glyph="&#xe8a7;"/>
                             </Button>
 
                             <Button Tag="{x:Bind Path}" ToolTipService.ToolTip="Copy path" Click="CopyPathButton_Click">
@@ -234,5 +274,7 @@
                 </DataTemplate>
             </ListView.ItemTemplate>
         </ListView>
+
+        <StackPanel x:Name="InfoBarList" Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Top" Orientation="Vertical" Spacing="3" Background="Transparent"/>
     </Grid>
 </UserControl>

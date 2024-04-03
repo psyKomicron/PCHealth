@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "DisplayMonitor.h"
+#include "DisplayMonitor.hpp"
 
 #include "utilities.h"
 
@@ -124,11 +124,6 @@ namespace pchealth::windows
 
             _currentResolution = std::make_pair(x, y);
             _vsync = vsync;
-
-            OutputDebug
-            (
-                std::format(L"[DisplayMonitor] '{}' cx: {} | cy: {} | pixelRate: {} | hsync: {} | vsync: {}.", _friendlyName, _currentResolution.first, _currentResolution.second, clockRate, hsync, vsync)
-            );
         }
     }
 
@@ -146,30 +141,30 @@ namespace pchealth::windows
 
         if (res == DISP_CHANGE_SUCCESSFUL)
         {
-            OutputDebug(std::format(L"[DisplayMonitor] Test successful, frequency: {}/{}.", closestFrequency, dm.dmDisplayFrequency));
+            OUTPUT_DEBUG(std::format(L"[DisplayMonitor] Test successful, frequency: {}/{}.", closestFrequency, dm.dmDisplayFrequency));
 
             dm.dmDisplayFrequency = closestFrequency;
             res = ChangeDisplaySettingsExW(deviceNameString.c_str(), &dm, nullptr, CDS_UPDATEREGISTRY, nullptr);
             if (res != DISP_CHANGE_SUCCESSFUL)
             {
-                OutputDebug(std::format(L"[DisplayMonitor] Failed to apply frequency ({}Hz).", dm.dmDisplayFrequency));
+                OUTPUT_DEBUG(std::format(L"[DisplayMonitor] Failed to apply frequency ({} Hz).", dm.dmDisplayFrequency));
             }
 
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            OUTPUT_DEBUG(std::format(L"[DisplayMonitor] Applied temporary lower frequency ({}), reverting back to old frequency ({}).", closestFrequency, _vsync));
+            std::this_thread::sleep_for(std::chrono::seconds(3));
 
-            OutputDebug(L"[DisplayMonitor] Applied temporary lower frequency, reverting back to old frequency.");
             dm.dmDisplayFrequency = _vsync;
-            res = ChangeDisplaySettingsExW(deviceNameString.c_str(), &dm, nullptr, 0, nullptr);
+            res = ChangeDisplaySettingsExW(deviceNameString.c_str(), &dm, nullptr, CDS_UPDATEREGISTRY, nullptr);
             if (res != DISP_CHANGE_SUCCESSFUL)
             {
-                OutputDebug(std::format(L"Test failed, frequency: {}.", _vsync));
+                OUTPUT_DEBUG(std::format(L"[DisplayMonitor] Test failed, frequency: {}.", _vsync));
             }
 
-            OutputDebug(L"[DisplayMonitor] Reverted back to old frequency, display frequency refresh successful !");
+            OUTPUT_DEBUG(L"[DisplayMonitor] Reverted back to old frequency, display frequency refresh successful !");
         }
         else
         {
-            OutputDebug(std::format(L"Test failed, frequency: {}/{}.", closestFrequency, dm.dmDisplayFrequency));
+            OUTPUT_DEBUG(std::format(L"[DisplayMonitor] Test failed, frequency: {}/{}.", closestFrequency, dm.dmDisplayFrequency));
         }
     }
 
@@ -213,14 +208,14 @@ namespace pchealth::windows
         _friendlyName = (targetName.flags.friendlyNameFromEdid ? targetName.monitorFriendlyDeviceName : L"");
         _displayName = std::wstring(targetName.monitorDevicePath);
 
-        OutputDebug
+        /*OutputDebug
         (
             std::format(L"'{}' ({}) display friendly name: {}", 
                 targetName.monitorDevicePath, 
                 targetName.connectorInstance,
                 (targetName.flags.friendlyNameFromEdid ? targetName.monitorFriendlyDeviceName : L"unknown")
             )
-        );
+        );*/
     }
 
     void DisplayMonitor::sizeVectors(std::vector<DISPLAYCONFIG_PATH_INFO>& paths, std::vector<DISPLAYCONFIG_MODE_INFO>& modes)

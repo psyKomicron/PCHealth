@@ -3,6 +3,8 @@
 
 #include "utilities.h"
 
+#include <boost/functional/hash.hpp>
+
 #include <string>
 
 namespace pchealth::storage
@@ -56,11 +58,7 @@ namespace pchealth::storage
         }
         else if constexpr (SHOW_ALL_CONTAINERS)
         {
-            OutputDebug(L"Showing all containers...");
-            for (auto&& container : localSettings.Containers())
-            {
-                OutputDebug(std::wstring(container.Key()));
-            }
+            printContainer(localSettings);
         }
 
         return list;
@@ -75,21 +73,14 @@ namespace pchealth::storage
         }
     }
 
-    std::map<winrt::hstring, std::map<winrt::hstring, winrt::Windows::Foundation::IInspectable>> LocalSettings::restoreObjectList(const winrt::hstring& key) const
+    std::map<winrt::hstring, CompositeSetting> LocalSettings::restoreObjectList(const winrt::hstring& key) const
     {
-        std::map<winrt::hstring, std::map<winrt::hstring, winrt::Windows::Foundation::IInspectable>> objectList{};
-        auto&& containers = localSettings.Containers().Lookup(key);
-        for (auto&& container : containers.Containers())
+        std::map<winrt::hstring, CompositeSetting> objectList{};
+        auto&& containers = key.empty() ? localSettings.Values() : localSettings.Containers().Lookup(key).Values();
+        for (auto&& container : containers)
         {
             winrt::hstring objectKey = container.Key();
-
-            std::map<winrt::hstring, winrt::Windows::Foundation::IInspectable> membersMap{};
-            for (auto&& value : container.Value().Values())
-            {
-                membersMap.insert(std::make_pair(value.Key(), value.Value()));
-            }
-
-            objectList.insert(std::make_pair(objectKey, membersMap));
+            objectList.insert(std::make_pair(objectKey, CompositeSetting(container.Value().as<winrt::Windows::Storage::ApplicationDataCompositeValue>())));
         }
 
         return objectList;
@@ -102,11 +93,70 @@ namespace pchealth::storage
 
     std::optional<winrt::Windows::Storage::ApplicationDataContainer> LocalSettings::tryLookup(const winrt::hstring& key)
     {
+        auto&& obj = localSettings.Values().TryLookup(key);
+        if (obj != nullptr)
+        {
+            return obj.try_as<winrt::Windows::Storage::ApplicationDataContainer>();
+        }
         return {};
     }
+
+    bool LocalSettings::moveTo(const winrt::hstring& key)
+    {
+        if (localSettings.Containers().HasKey(key))
+        {
+            OutputDebug(std::format(L"[LocalSettings] Container '{}' moved to {}.", localSettings.Name(), key));
+            localSettings = localSettings.Containers().Lookup(key);
+            if constexpr (SHOW_ALL_CONTAINERS)
+            {
+                printContainer(localSettings);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    void LocalSettings::append(const winrt::hstring& key, const winrt::Windows::Storage::ApplicationDataCompositeValue& value)
+    {
+        localSettings.Values().Insert(key, value);
+    }
+
+    winrt::Windows::Storage::ApplicationDataCompositeValue LocalSettings::getComposite()
+    {
+        return winrt::Windows::Storage::ApplicationDataCompositeValue();
+    }
+
+    bool LocalSettings::contains(const winrt::hstring& key)
+    {
+        return localSettings.Values().HasKey(key);
+    }
+
+    void LocalSettings::clear(const winrt::hstring& key)
+    {
+        if (key.empty())
+        {
+            localSettings.Values().Clear();
+        }
+        else
+        {
+            localSettings.Containers().Lookup(key).Values().Clear();
+        }
+    }
+
 
     winrt::Windows::Storage::ApplicationDataContainer LocalSettings::createContainer(const winrt::hstring& key) const
     {
         return localSettings.CreateContainer(key, winrt::Windows::Storage::ApplicationDataCreateDisposition::Always);
+    }
+
+    void LocalSettings::printContainer(const winrt::Windows::Storage::ApplicationDataContainer& container) const
+    {
+        OutputDebug(std::format(L"[LocalSettings] Listing '{}' containers.", container.Name()));
+        auto&& containers = container.Containers();
+        for (auto&& pair : containers)
+        {
+            //container.Key()
+            OutputDebug(std::format(L"{} : {} keys.", std::wstring(pair.Key()), pair.Value().Values().Size()));
+        }
     }
 }

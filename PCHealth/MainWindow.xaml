@@ -7,23 +7,87 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Grid x:Name="RootGrid" Loading="RootGrid_Loading">
+    <Grid x:Name="RootGrid" Loading="RootGrid_Loading" Loaded="ScrollViewer_Loaded" SizeChanged="RootGrid_SizeChanged">
         <Grid.RowDefinitions>
-            <RowDefinition MinHeight="30" MaxHeight="30"/>
+            <RowDefinition MinHeight="35" MaxHeight="35"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <Grid x:Name="WindowTitleBarGrid" Background="Transparent">
+        <Grid x:Name="WindowTitleBarGrid" Background="Transparent" Padding="0,3,0,0">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition x:Name="LeftPaddingColumn" Width="0"/>
+                <ColumnDefinition x:Name="LeftPaddingColumn" Width="3"/>
                 <ColumnDefinition x:Name="SettingsButtonColumn" Width="Auto"/>
-                <ColumnDefinition x:Name="TitleBarGridContentColumn" Width="*"/>
+                <ColumnDefinition x:Name="CenterLeftColumn" Width="*"/>
+                <ColumnDefinition x:Name="TitleBarGridContentColumn" Width="Auto"/>
+                <ColumnDefinition x:Name="CenterRightColumn" Width="*"/>
                 <ColumnDefinition x:Name="RightPaddingColumn" Width="45"/>
             </Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal" Spacing="2" Grid.Column="1">
+                <Button x:Name="BackButton" Style="{StaticResource IconButtonStyle}" Click="BackButton_Click" IsEnabled="False">
+                    <FontIcon Glyph="&#xe72b;" FontSize="15"/>
+                </Button>
+
+                <Button Style="{StaticResource IconButtonStyle}" Click="HomeButton_Click">
+                    <FontIcon Glyph="&#xe80f;" FontSize="15"/>
+                    <Button.ContextFlyout>
+                        <Flyout Placement="Bottom" ShouldConstrainToRootBounds="True">
+                            <Grid Margin="-50,0" HorizontalAlignment="Center" VerticalAlignment="Center" RowSpacing="10">
+                                <Grid.Resources>
+                                    <Style TargetType="Button" BasedOn="{StaticResource IconButtonStyle}"/>
+                                </Grid.Resources>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition/>
+                                    <RowDefinition/>
+                                </Grid.RowDefinitions>
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <Button>
+                                        <FontIcon Glyph="&#xeda2;"/>
+                                    </Button>
+                                    <Button>
+                                        <FontIcon Glyph="&#xf12b;"/>
+                                    </Button>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Grid.Row="1" Spacing="10">
+                                    <Button>
+                                        <FontIcon Glyph="&#xf0e3;"/>
+                                    </Button>
+                                    <Button>
+                                        <FontIcon Glyph="&#xf78b;"/>
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+                        </Flyout>
+                    </Button.ContextFlyout>
+                </Button>
+            </StackPanel>
+            <!--<TextBlock
+                x:Name="PageTitleTextBlock" 
+                Opacity="0.7" 
+                FontSize="12"
+                Grid.Column="2"
+                HorizontalAlignment="Center" 
+                VerticalAlignment="Center"/>-->
+
+            <StackPanel x:Name="PageButtonsStackPanel" Orientation="Horizontal" Spacing="10" Grid.Column="3" HorizontalAlignment="Center">
+                <Button Tag="PCHealth.DrivesPage" Click="DrivesPageTitleBarButton_Click">
+                    <FontIcon Glyph="&#xeda2;"/>
+                </Button>
+                <Button Tag="PCHealth.WatchedFoldersPage" Click="WatchedFoldersPageTitleBarButton_Click">
+                    <FontIcon Glyph="&#xf12b;"/>
+                </Button>
+                <Button Tag=" ">
+                    <FontIcon Glyph="&#xf0e3;"/>
+                </Button>
+                <Button Tag="PCHealth.SystemSearchPage2" Click="SystemSearchPageTitleBarButton_Click">
+                    <FontIcon Glyph="&#xf78b;"/>
+                </Button>
+            </StackPanel>
         </Grid>
 
-        <Frame x:Name="Frame" Grid.Row="1">
-            <local:HomePage/>
-        </Frame>
+        <ListView x:Name="InfoBarListView" SelectionMode="None" Grid.Row="1" MaxHeight="100" Background="Transparent"/>
+
+        <Frame x:Name="Frame" Grid.Row="2" Loaded="Frame_Loaded"/>
     </Grid>
 </Window>

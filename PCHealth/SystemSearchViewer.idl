@@ -5,6 +5,8 @@ namespace PCHealth
     {
         SystemSearchViewer();
 
+        Windows.Foundation.IAsyncAction Search(String query);
+
         IObservableVector<String> Drives{ get; };
     }
 }

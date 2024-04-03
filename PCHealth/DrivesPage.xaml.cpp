@@ -22,7 +22,7 @@ namespace winrt::PCHealth::implementation
 {
     winrt::Windows::Foundation::IAsyncAction DrivesPage::DrivesGrid_Loading(xaml::FrameworkElement const& sender, winrt::Windows::Foundation::IInspectable const& args)
     {
-        auto&& drives = pchealth::filesystem::DriveInfo::GetDrives();
+        auto&& drives = pchealth::filesystem::DriveInfo::getDrives();
 
         ConnectedDrivesNumberTextBlock().Text(std::to_wstring(drives.size()));
 
@@ -38,14 +38,14 @@ namespace winrt::PCHealth::implementation
             recycleBinTotalSize += drive.getRecycleBinSize();
         }
 
-        Common::FileSize hibernationFileSize = pchealth::windows::System::GetFileSize(L"c:\\hiberfil.sys");
+        pchealth::filesystem::FileSize hibernationFileSize = pchealth::windows::System::getFileSize(L"c:\\hiberfil.sys");
         HibernationFileSize().Text(hibernationFileSize.ToString());
         if (hibernationFileSize.Size() == 0)
         {
             HibernationFileSizeButton().IsEnabled(false);
         }
 
-        Common::FileSize systemRecycleBinSize = recycleBinTotalSize;
+        pchealth::filesystem::FileSize systemRecycleBinSize = recycleBinTotalSize;
         SystemRecycleBinSize().Text(systemRecycleBinSize.ToString());
         if (recycleBinTotalSize == 0)
         {
@@ -59,7 +59,7 @@ namespace winrt::PCHealth::implementation
         {
             pchealth::filesystem::DirectoryInfo downloadsFolderInfo{ downloadsFolder };
             auto&& downloadsFolderSize = downloadsFolderInfo.GetSize();
-            DispatcherQueue().TryEnqueue([this, downloadsSize = Common::FileSize(downloadsFolderSize)]
+            DispatcherQueue().TryEnqueue([this, downloadsSize = pchealth::filesystem::FileSize(downloadsFolderSize)]
             {
                 DownloadsFolderSize().Text(downloadsSize.ToString());
             });
