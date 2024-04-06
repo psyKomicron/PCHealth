@@ -142,6 +142,8 @@
     <Manifest Include="app.manifest" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BaseSearcher.hpp" />
+    <ClInclude Include="CachedSearcher.hpp" />
     <ClInclude Include="CancellationException.hpp" />
     <ClInclude Include="ClipboardManagerView.xaml.h">
       <DependentUpon>ClipboardManagerView.xaml</DependentUpon>
@@ -204,7 +206,7 @@
     <ClInclude Include="MainWindow.xaml.h">
       <DependentUpon>MainWindow.xaml</DependentUpon>
     </ClInclude>
-    <ClInclude Include="Searcher.h" />
+    <ClInclude Include="Searcher.hpp" />
     <ClInclude Include="SearchResult.h" />
     <ClInclude Include="SearchResultKind.h" />
     <ClInclude Include="System.h" />
@@ -275,6 +277,8 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BaseSearcher.cpp" />
+    <ClCompile Include="CachedSearcher.cpp" />
     <ClCompile Include="CancellationException.cpp" />
     <ClCompile Include="ClipboardManagerView.xaml.cpp">
       <DependentUpon>ClipboardManagerView.xaml</DependentUpon>

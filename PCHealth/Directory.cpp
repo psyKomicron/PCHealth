@@ -12,7 +12,7 @@ using HandlePtr = std::unique_ptr<void, std::function<bool(HANDLE)>>;
 using namespace pchealth::filesystem;
 
 
-std::optional<Directory> pchealth::filesystem::Directory::tryCreateDirectory(const std::wstring& wstring)
+std::optional<Directory> Directory::tryCreateDirectory(const std::wstring& wstring)
 {
     auto path = std::filesystem::path{ wstring };
     if (wstring.size() >= 3)
@@ -36,6 +36,32 @@ std::optional<Directory> pchealth::filesystem::Directory::tryCreateDirectory(con
     }
 
     return std::optional<Directory>();
+}
+
+uint64_t pchealth::filesystem::Directory::enumerateDirectory(const std::filesystem::path& path, std::vector<std::pair<std::wstring, bool>>& entries)
+{
+    uint64_t count = 0;
+
+    WIN32_FIND_DATA findData{};
+    HANDLE findHandle = FindFirstFile((path / L"*").c_str(), &findData);
+    if (findHandle != INVALID_HANDLE_VALUE)
+    {
+        HandlePtr findHandlePtr{ findHandle, FindClose };
+        do
+        {
+            std::wstring fileName = std::wstring(findData.cFileName);
+            if (fileName != L"." && fileName != L"..")
+            {
+                std::filesystem::path filePath = path / fileName;
+                entries.push_back(
+                    std::make_pair(filePath, findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+                );
+                count++;
+            }
+        } while (FindNextFile(findHandle, &findData));
+    }
+
+    return count;
 }
 
 

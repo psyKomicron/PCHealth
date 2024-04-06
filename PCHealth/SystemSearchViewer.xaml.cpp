@@ -7,6 +7,7 @@
 #include "System.h"
 #include "LocalSettings.h"
 #include "utilities.h"
+#include "CachedSearcher.hpp"
 
 #include <winrt/Windows.Storage.h>
 #include <winrt/Windows.Storage.FileProperties.h>
@@ -26,14 +27,13 @@ using namespace winrt::PCHealth::implementation;
 
 SystemSearchViewer::SystemSearchViewer()
 {
-    searcher = std::unique_ptr<pchealth::windows::search::Searcher>(
-        new pchealth::windows::search::Searcher(
-            false,
+    searcher = std::unique_ptr<pchealth::windows::search::CachedSearcher>(
+        new pchealth::windows::search::CachedSearcher(
             [this](auto&& s, auto&& b)
             {
                 concurrency::create_task([this, vector = std::move(s), b]()
                 {
-                    AddSearchResult(vector, b);
+                    AddSearchResults(vector, b);
                 });
             }));
 
@@ -57,20 +57,21 @@ winrt::Windows::Foundation::Collections::IObservableVector<winrt::hstring> Syste
 winrt::Windows::Foundation::IAsyncAction SystemSearchViewer::Search(const winrt::hstring& _query)
 {
     // Capture parameter.
-    hstring query{ _query };
+    std::wstring query{ _query };
+
+    if (query.empty())
+    {
+        AddMessage(L"Query is empty.", 3);
+        co_return;
+    }
+
     searchApplicationCount.store(0);
     searchFileCount.store(0);
     searchFolderCount.store(0);
 
-    SearchFileCountTextBlock().Text(L"");
-    SearchFolderCountTextBlock().Text(L"");
-    SearchApplicationCountTextBlock().Text(L"");
+    ActivateUIForSearch();
 
-    _searchResults.Clear();
-    _filterResults.Clear();
-    SearchResultsListView().ItemsSource(_searchResults);
-    SearchAutoSuggestBox().Text(query);
-    visualStateManager.goToState(SystemSearchViewerStates::SearchState);
+    TryParseQuery(query);
 
     std::vector<pchealth::filesystem::DriveInfo> includedDrives{};
     if (IncludeAllDrivesToggleSwitch().IsOn())
@@ -88,46 +89,39 @@ winrt::Windows::Foundation::IAsyncAction SystemSearchViewer::Search(const winrt:
 
     co_await winrt::resume_background();
 
-    if (!query.empty())
+
+    DispatcherQueue().TryEnqueue([&]()
     {
-        searchHistory.push_back(query);
+        RemainingTextBlock().Text(winrt::to_hstring(searcher->remaining()));
+    });
 
-        DispatcherQueue().TryEnqueue([&]()
+    try
+    {
+        searcher->search(query, includedDrives);
+        searchHistory.push_back(query.data());
+    }
+    catch (boost::regex_error err)
+    {
+        DispatcherQueue().TryEnqueue([this, text = winrt::to_hstring(err.what())]()
         {
-            RemainingTextBlock().Text(winrt::to_hstring(searcher->remaining()));
-        });
-
-        try
-        {
-            searcher->search(std::wstring(query), includedDrives);
-        }
-        catch (boost::regex_error err)
-        {
-            DispatcherQueue().TryEnqueue([this, err]()
-            {
-                SearchTextBlock().Text(winrt::to_hstring(err.what()));
-                SearchTextBlock().Visibility(xaml::Visibility::Visible);
-            });
-        }
-        catch (std::invalid_argument& ex)
-        {
-            DispatcherQueue().TryEnqueue([this, ex]()
-            {
-                SearchTextBlock().Text(winrt::to_hstring(ex.what()));
-                SearchTextBlock().Visibility(xaml::Visibility::Visible);
-            });
-        }
-
-        DispatcherQueue().TryEnqueue([this, text = query]()
-        {
-            visualStateManager.goToState(SystemSearchViewerStates::RestState);
-            AddMessage(L"Finished searching: " + text, 0);
+            SearchTextBlock().Text(text);
+            SearchTextBlock().Visibility(xaml::Visibility::Visible);
         });
     }
-    else
+    catch (std::invalid_argument& ex)
     {
-        AddMessage(L"Query is empty.", 3);
+        DispatcherQueue().TryEnqueue([this, text = winrt::to_hstring(ex.what())]()
+        {
+            SearchTextBlock().Text(text);
+            SearchTextBlock().Visibility(xaml::Visibility::Visible);
+        });
     }
+
+    DispatcherQueue().TryEnqueue([this, text = winrt::hstring(query)]()
+    {
+        visualStateManager.goToState(SystemSearchViewerStates::RestState);
+        AddMessage(L"Finished searching: " + text, 0);
+    });
 }
 
 winrt::Windows::Foundation::IAsyncAction SystemSearchViewer::UserControl_Loading(xaml::FrameworkElement const&, winrt::Windows::Foundation::IInspectable const&)
@@ -146,6 +140,7 @@ winrt::Windows::Foundation::IAsyncAction SystemSearchViewer::UserControl_Loading
 
 winrt::Windows::Foundation::IAsyncAction SystemSearchViewer::AutoSuggestBox_QuerySubmitted(xaml::Controls::AutoSuggestBox const&, xaml::Controls::AutoSuggestBoxQuerySubmittedEventArgs const& args)
 {
+    SearchAutoSuggestBox().Text(args.QueryText());
     co_await Search(args.QueryText());
 }
 
@@ -187,7 +182,7 @@ void SystemSearchViewer::OpenOptionsButton_Click(winrt::Windows::Foundation::IIn
 void SystemSearchViewer::FilterAutoSuggestBox_QuerySubmitted(xaml::Controls::AutoSuggestBox const&, xaml::Controls::AutoSuggestBoxQuerySubmittedEventArgs const& args)
 {
     auto queryText = std::wstring(args.QueryText());
-    FilterSearch(queryText);
+    Filter(queryText);
 }
 
 void SystemSearchViewer::IncludeAllDrivesToggleSwitch_Toggled(winrt::Windows::Foundation::IInspectable const&, xaml::RoutedEventArgs const&)
@@ -200,13 +195,13 @@ void SystemSearchViewer::FilterAutoSuggestBox_TextChanged(xaml::Controls::AutoSu
     if (args.CheckCurrent())
     {
         auto queryText = std::wstring(FilterAutoSuggestBox().Text());
-        FilterSearch(queryText);
+        Filter(queryText);
     }
 }
 
 void SystemSearchViewer::MatchFilePathToggleSwitch_Toggled(winrt::Windows::Foundation::IInspectable const&, xaml::RoutedEventArgs const&)
 {
-    searcher->matchFilePath(MatchFilePathToggleSwitch().IsOn());
+    searcher->searchFilePath(MatchFilePathToggleSwitch().IsOn());
 }
 
 void SystemSearchViewer::SearchResultsListView_DoubleTapped(winrt::Windows::Foundation::IInspectable const&, xaml::Input::DoubleTappedRoutedEventArgs const&)
@@ -261,7 +256,7 @@ void SystemSearchViewer::CancelSearchButton_Click(Windows::Foundation::IInspecta
 }
 
 
-void SystemSearchViewer::AddSearchResult(std::vector<pchealth::windows::search::SearchResult> finds, const bool& update)
+void SystemSearchViewer::AddSearchResults(std::vector<pchealth::windows::search::SearchResult> finds, const bool& update)
 {
     if (!searcher->isSearchCancelled() 
         && (searchFileCount.load() + searchFolderCount.load() + searchApplicationCount.load()) > 5000)
@@ -488,14 +483,14 @@ void SystemSearchViewer::SaveControl()
     settings.saveList(L"History", searchHistory);
 }
 
-void SystemSearchViewer::FilterSearch(std::wstring queryText)
+void SystemSearchViewer::Filter(std::wstring queryText)
 {
     _filterResults.Clear();
     SearchResultsListView().ItemsSource(_filterResults);
     visualStateManager.goToState(SystemSearchViewerStates::FilterSearchState);
     try
     {
-        std::wregex re{ queryText, std::regex_constants::icase | std::regex_constants::egrep };
+        std::wregex re{ queryText };
 
         pchealth::windows::search::SearchResultKind kind = pchealth::windows::search::SearchResultKind::None;
         if (queryText.size() >= 2)
@@ -506,19 +501,16 @@ void SystemSearchViewer::FilterSearch(std::wstring queryText)
                 std::make_pair(L"d:", pchealth::windows::search::SearchResultKind::Directory), 
                 std::make_pair(L"f:", pchealth::windows::search::SearchResultKind::File) 
             };
+
             for (size_t i = 0; i < array.size(); i++)
             {
                 if (queryText.starts_with(array[i].first))
                 { 
                     kind = array[i].second;
-                    if (queryText.size() > 2)
-                    {
-                        queryText = queryText.substr(2);
-                    }
-                    else
-                    {
-                        queryText = L"";
-                    }
+                    queryText = queryText.size() > 2
+                        ? queryText.substr(2)
+                        : L"";
+
                     break;
                 }
             }
@@ -527,8 +519,14 @@ void SystemSearchViewer::FilterSearch(std::wstring queryText)
         for (auto&& entry : _searchResults)
         {
             auto&& item = entry.as<FileInfoViewModel>();
-            auto itemName = std::wstring(item.Name());
-            if ((item.Kind() == static_cast<int32_t>(kind) || kind == pchealth::windows::search::SearchResultKind::None) 
+            auto itemName = std::wstring(item.Path());
+
+            if (itemName == queryText)
+            {
+                // If the name fully matches the query, insert it at the top of the list;
+                _filterResults.InsertAt(0, item);
+            }
+            else if ((item.Kind() == static_cast<int32_t>(kind) || kind == pchealth::windows::search::SearchResultKind::None) 
                 && (queryText.empty() || std::regex_search(itemName, re)))
             {
                 _filterResults.Append(item);
@@ -557,4 +555,49 @@ void SystemSearchViewer::AddMessage(winrt::hstring message, int32_t level)
         }
     });
     InfoBarList().Children().Append(infoBar);
+}
+
+void SystemSearchViewer::ActivateUIForSearch()
+{
+    _searchResults.Clear();
+    _filterResults.Clear();
+
+    SearchResultsListView().ItemsSource(_searchResults);
+    
+    SearchFileCountTextBlock().Text(L"");
+    SearchFolderCountTextBlock().Text(L"");
+    SearchApplicationCountTextBlock().Text(L"");
+    
+    visualStateManager.goToState(SystemSearchViewerStates::SearchState);
+}
+
+void SystemSearchViewer::TryParseQuery(std::wstring& query)
+{
+    if (!searcher->searchFilePath() && query.find(L'\\') != std::wstring::npos)
+    {
+        AddMessage(L"Query contains backslash ('\\'), activating 'match file path' on searcher.", 0);
+    }
+
+    const boost::wregex tokenRegex{ L"^(e|w):(.*)" };
+    boost::match_results<std::wstring::const_iterator> matchResults{};
+    if (query.size() > 2 && boost::regex_search(query, matchResults, tokenRegex))
+    {
+        auto& actualQuery = matchResults[2];
+        auto& prefix = matchResults[1];
+
+        if (prefix == L"e")
+        {
+            const boost::wregex escapeRegex{ L"[.^$|()\\[\\]{}*+?\\\\]" };
+            const std::wstring rep{ L"\\\\&" };
+            query = boost::regex_replace(std::wstring(actualQuery.first, actualQuery.second), escapeRegex, rep, boost::match_default | boost::format_sed);
+
+            OUTPUT_DEBUG(std::format(L"[SystemSearchViewer] Escaped query '{}'.", query));
+
+            AddMessage(std::format(L"Escaped query: {}", query).data(), 0);
+        }
+        else if (prefix == L"w")
+        {
+            query = std::format(L"[[:space:]]{}[[:space:]]", std::wstring(actualQuery.first, actualQuery.second));
+        }
+    }
 }

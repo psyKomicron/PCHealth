@@ -11,6 +11,8 @@ namespace pchealth::filesystem
     public:
         static std::optional<Directory> tryCreateDirectory(const std::wstring& wstring);
 
+        static uint64_t enumerateDirectory(const std::filesystem::path& path, std::vector<std::pair<std::wstring, bool>>& entries);
+
         Directory() = default;
 
         Directory(const std::wstring& path);

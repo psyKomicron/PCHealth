@@ -1,9 +1,10 @@
 #pragma once
-
 #include "SystemSearchViewer.g.h"
 
-#include "Searcher.h"
+#include "BaseSearcher.hpp"
 #include "VisualStateManager.hpp"
+
+#include <boost/regex.hpp>
 
 namespace winrt::PCHealth::implementation
 {
@@ -44,7 +45,7 @@ namespace winrt::PCHealth::implementation
 
     private:
         bool loaded = false;
-        std::unique_ptr<pchealth::windows::search::Searcher> searcher;
+        std::unique_ptr<pchealth::windows::search::BaseSearcher> searcher;
         winrt::Windows::Foundation::Collections::IObservableVector<winrt::hstring> _drives = winrt::single_threaded_observable_vector<winrt::hstring>();
         winrt::Windows::Foundation::Collections::IObservableVector<winrt::PCHealth::FileInfoViewModel> _searchResults = winrt::single_threaded_observable_vector<winrt::PCHealth::FileInfoViewModel>();
         winrt::Windows::Foundation::Collections::IObservableVector<winrt::PCHealth::FileInfoViewModel> _filterResults = winrt::single_threaded_observable_vector<winrt::PCHealth::FileInfoViewModel>();
@@ -58,7 +59,7 @@ namespace winrt::PCHealth::implementation
 
         void AppendMany(const winrt::Windows::Foundation::Collections::IVector<winrt::Windows::Storage::StorageFolder>& vect, const winrt::Windows::Foundation::Collections::IVector<winrt::Windows::Storage::StorageFolder>& toAppend);
         
-        void AddSearchResult(std::vector<pchealth::windows::search::SearchResult> finds, const bool& fromThread);
+        void AddSearchResults(std::vector<pchealth::windows::search::SearchResult> finds, const bool& fromThread);
         
         winrt::Windows::Foundation::IAsyncAction AddNewFile(std::wstring path);
         
@@ -68,9 +69,13 @@ namespace winrt::PCHealth::implementation
         
         void SaveControl();
         
-        void FilterSearch(std::wstring query);
+        void Filter(std::wstring query);
         
         void AddMessage(winrt::hstring message, int32_t level);
+
+        void ActivateUIForSearch();
+
+        void TryParseQuery(std::wstring& query);
     };
 }
 

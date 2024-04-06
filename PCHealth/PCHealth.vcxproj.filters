@@ -122,6 +122,12 @@
     <ClCompile Include="FileSize.cpp">
       <Filter>lib\filesystem</Filter>
     </ClCompile>
+    <ClCompile Include="CachedSearcher.cpp">
+      <Filter>lib\windows\search</Filter>
+    </ClCompile>
+    <ClCompile Include="BaseSearcher.cpp">
+      <Filter>lib\windows\search</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -158,7 +164,7 @@
     <ClInclude Include="Directory.hpp">
       <Filter>lib\filesystem</Filter>
     </ClInclude>
-    <ClInclude Include="Searcher.h">
+    <ClInclude Include="Searcher.hpp">
       <Filter>lib\windows\search</Filter>
     </ClInclude>
     <ClInclude Include="SearchResult.h">
@@ -196,6 +202,12 @@
     </ClInclude>
     <ClInclude Include="FileSize.h">
       <Filter>lib\filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="CachedSearcher.hpp">
+      <Filter>lib\windows\search</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseSearcher.hpp">
+      <Filter>lib\windows\search</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -257,9 +269,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="CHANGELOG.md" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="packages.config">
       <Filter>winui\Assets</Filter>
     </None>
@@ -289,5 +298,8 @@
     <PRIResource Include="Resources.resw">
       <Filter>winui\Assets</Filter>
     </PRIResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="CHANGELOG.md" />
   </ItemGroup>
 </Project>
